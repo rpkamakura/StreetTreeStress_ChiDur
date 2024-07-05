@@ -1,0 +1,597 @@
+---
+title: "Combine Data 3 Years"
+output: html_document
+date: "2023-07-28"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Need to average within years
+
+```{r load data}
+S23DataStreets <- read.csv("../01Data/Chicago/Raw/090623ChicagoMainSheetS23_edit.csv")
+S23DataUIC  <- read.csv("../01Data/Chicago/Raw/090623UICTrees_edit.csv")
+S22Data <- read.csv("../01Data/Chicago/Raw/S22ChicagoStreetTrees.csv")
+S22C2C <- read.csv("../01Data/Chicago/Raw/ChicagoS22Segs_Cues2Care.csv")
+S21Data <- read.csv("../01Data/Chicago/Raw/ChicagoTreeHealth_S21.csv")
+S21C2C <- read.csv("../01Data/Chicago/Raw/ChicagoS21Segs_Cues2Care.csv")
+
+#for typology and other general variables
+#TreeLvlCombined <- read.csv("../../01Data/02ChicagoSampling/ProcessedData/TreeLevelDataCombined050123.csv")
+
+```
+
+##Combine S23 Data
+
+```{r combine S23}
+S23_cols <- c("Date", "TreeName", "FullSample", "Segment", "Genus", "Species", "DBHTot", "LandUse", "SiteType", "PercImperv", "Street", "Sidewalk", "Powerline", "Mulch", "MulchVolcano", "TreeGuard", "Irrigation", "GatorBag", "Pruned", "HatrackPrune", "FlushCutPrune", "TearBarkPrune", "Gardenscape", "Mowing", "VegDescription", "Grate", "RootsVis", "GirdlingRoots", "FungalConch", "RdSiLift", "RdSiCrack", "BroDeadBranch", "TrunkDam", "LeafCurl", "Discoloration", "Defoliation", "Dieback", "CrownVigor", "Transparency", "CrownLightExposure", "Dead", "Missing", "Exclude")
+nRws <- length(S23DataStreets$Date) + length(S23DataUIC$Date)
+
+S23Data <- as.data.frame(matrix(0, nrow = nRws, ncol = length(S23_cols)))
+names(S23Data) <- S23_cols
+
+#add the data (for ease/visibility)
+#basic info
+S23Data$Date <- c(S23DataStreets$Date, S23DataUIC$Date)
+S23Data$TreeName <- c(S23DataStreets$Tree.Name, S23DataUIC$Tree.Name)
+S23Data$FullSample <- c(S23DataStreets$Full.Sample, rep(1, length(S23DataUIC[,1])))
+S23Data$Segment <- c(S23DataStreets$Street.Segment, rep("UIC", length(S23DataUIC[,1])))
+S23Data$Genus <- c(S23DataStreets$Genus, S23DataUIC$Genus)
+S23Data$Species <- c(S23DataStreets$Species, S23DataUIC$Species)
+S23Data$DBHTot <- c(S23DataStreets$Total.DBH, S23DataUIC$Total.DBH)
+
+#location
+S23Data$LandUse <- c(S23DataStreets$Land.Use.Type, rep("INST", length(S23DataUIC[,1])))
+S23Data$SiteType <- c(S23DataStreets$Site.type, S23DataUIC$Site.type)
+S23Data$PercImperv <- c(S23DataStreets$Percent.Imperv.in.Root.Zone, S23DataUIC$Percent.Imperv.in.Root.Zone)
+S23Data$Street <- c(S23DataStreets$Street, S23DataUIC$Street)
+S23Data$Sidewalk <- c(S23DataStreets$Sidewalk, S23DataUIC$Sidewalk)
+S23Data$Powerline <- c(S23DataStreets$Powerline, S23DataUIC$Powerline)
+
+#Cues to Care
+S23Data$Mulch <- c(S23DataStreets$Mulch, S23DataUIC$Mulch)
+S23Data$MulchVolcano <- c(S23DataStreets$Mulch.Volcano, S23DataUIC$Mulch.Volcano)
+S23Data$TreeGuard <- c(S23DataStreets$Tree.guard, S23DataUIC$Tree.guard)
+S23Data$Irrigation <- c(S23DataStreets$Irrigation.infrastructure, S23DataUIC$Irrigation.infrastructure)
+S23Data$GatorBag <- c(S23DataStreets$Gator.bag, S23DataUIC$Gator.bag)
+S23Data$Pruned <- c(S23DataStreets$Pruned, S23DataUIC$Pruned)
+S23Data$HatrackPrune <- c(S23DataStreets$Prune...hatrack, S23DataUIC$Prune...hatrack)
+S23Data$FlushCutPrune <- c(S23DataStreets$Prune...flush.cut, S23DataUIC$Prune...flush.cut)
+S23Data$TearBarkPrune <- c(S23DataStreets$Prune...tear.bark, S23DataUIC$Tree.Name)
+S23Data$Gardenscape <- c(S23DataStreets$Gardenscape, S23DataUIC$Gardenscape)
+S23Data$Mowing <- c(S23DataStreets$Mowing, S23DataUIC$Mowing)
+S23Data$VegDescription <- c(S23DataStreets$Grass.Veg.Description, S23DataUIC$Grass.Description)
+S23Data$Grate <- c(S23DataStreets$Grate, rep(0, length(S23DataUIC[,1])))
+
+#Damage
+S23Data$RootsVis <- c(S23DataStreets$Roots.visible.above.soil, S23DataUIC$Roots.visible.above.soil)
+S23Data$GirdlingRoots <- c(S23DataStreets$Girdling.Roots, S23DataUIC$Girdling.Roots)
+S23Data$FungalConch <- c(S23DataStreets$Fungal.Conch, S23DataUIC$Fungal.Conch)
+S23Data$RdSiLift <- c(S23DataStreets$Road.Sidewalk.Lift, S23DataUIC$Road.Sidewalk.Lift)
+S23Data$RdSiCrack <- c(S23DataStreets$Road.Sidewalk.crack, S23DataUIC$Road.Sidewalk.crack)
+S23Data$BroDeadBranch <- c(S23DataStreets$Broken.or.Dead.Branches.in.crown, S23DataUIC$Broken.or.Dead.Branches.in.crown)
+S23Data$TrunkDam <- c(S23DataStreets$Trunk.damage, S23DataUIC$Trunk.damage)
+
+#Health
+S23Data$LeafCurl <- c(S23DataStreets$Leaf.curling.or.Wrinkling, S23DataUIC$Leaf.curling.or.Wrinkling)
+S23Data$Discoloration <- c(S23DataStreets$Discoloration, S23DataUIC$Discoloration)
+S23Data$Defoliation <- c(S23DataStreets$Defoliation, S23DataUIC$Defoliation)
+S23Data$Dieback <- c(S23DataStreets$Dieback, S23DataUIC$Dieback)
+S23Data$CrownVigor <- c(S23DataStreets$Crown.Vigor, S23DataUIC$Crown.Vigor)
+S23Data$Transparency <- c(S23DataStreets$Transparency, S23DataUIC$Transparency)
+S23Data$CrownLightExposure <- c(S23DataStreets$Crown.Light.Exposure, S23DataUIC$Crown.Light.Exposure)
+
+#Extra notes
+S23Data$Dead <- c(S23DataStreets$Dead., S23DataUIC$Dead.)
+S23Data$Missing <- c(S23DataStreets$Missing.or.Removed, S23DataUIC$Missing.or.Removed)
+S23Data$Exclude <- c(S23DataStreets$Exclude, S23DataUIC$Exclude)
+```
+
+
+
+
+##Now normalize them all and pull them together
+
+```{r pull in tree data}
+
+##pull in and combine the datasets
+trees23 <- unique(S23Data$TreeName)
+trees22 <- unique(S22Data$TreeName)
+trees21 <- unique(S21Data$TreeName)
+
+###Get all the tree names combined
+AllTrees <- unique(c(trees23, trees22, trees21))
+
+#get list of trees that were resampled
+resampledTrees <- S23Data$TreeName[(S23Data$FullSample == TRUE) & (S23Data$TreeName %in% c(trees21, trees22))]
+
+#for getting the dieback for the old data
+h1 <- c(seq(0,100, 5), NA)
+h1[1] <- 1
+h2 <- c(1:21, NA)
+HTHC_dict <- as.data.frame(matrix(c(h1,h2), ncol=2, nrow=22, byrow=FALSE))
+names(HTHC_dict) <- c("Original", "Simplified")
+
+
+##Create final storage matrix
+ColNames <- c("Year", "Date", "TreeName", "Segment", "Genus", "Species", "TotalDBH", "LandUse", "SiteType", "Pruned", "HatrackPrune", "FlushCutPrune", "PercentImperv", "Powerline", "Mulch", "MulchVolcano", "TreeGuard", "Gardenscape", "Mowing", "GrassDescription", "Grate", "GirdlingRoots", "RoadSideLift", "RoadSideCrack", "TrunkDamage", "LeafCurling", "Discoloration", "Defoliation", "Dieback", "CrownVigor", "CrownLight")
+
+years <- c(2021, 2022, 2023)
+nRows <- length(AllTrees)*length(years)*2 #in case you have multiple samples per year for QA/QC (should not need all this)
+
+TotalTreeMat <- as.data.frame(matrix(0, nrow=nRows, ncol=length(ColNames)))
+names(TotalTreeMat) <- ColNames
+
+stoInd <- 1
+treeswErrors <- c()
+#go through and create a dataset for each tree
+for (t in 1:length(AllTrees)){
+
+  tr <- AllTrees[t] #get tree name
+  
+  #get the 2023 data
+  if (tr %in% trees23){
+    newDat <- S23Data[S23Data$TreeName == tr,]
+    
+    #sampled multiple times
+    if (length(newDat$Date) > 1){
+      baseDat <- newDat #need to pull in baseDat at some points
+      newDat <- newDat[!is.na(newDat$SiteType),] #one with a full sample
+      
+    } else {
+      baseDat <- NULL
+      
+    }
+  }
+  
+  
+  
+
+  #figure out which dataset to pull from
+  if (tr %in% trees21){
+
+    oldDat <- S21Data[S21Data$TreeName == tr,]
+    oldDat <- oldDat[(!is.na(oldDat$CrownVigor) | !is.na(oldDat$FineTwigDieback)), ] #have at least some useful info
+
+    #If you have no useable HTHC data
+    if(length(oldDat$TreeName) == 0){
+      oldDat <- NULL
+      oldC2C <- NULL
+      
+      #if somehow just don't seem to have data
+      if(!(tr %in% resampledTrees)){
+        print(t)###############################################################
+        print(paste("Error, missing both old HTHC data and 2023 local site condition data for", tr))
+        treeswErrors <- append(treeswErrors, tr)
+        
+        next
+      }
+      
+    } else {
+      oldC2C <- S21C2C[S21C2C$Previous.Name..HTHC. == tr,]
+      
+      #don't have the sheet data (probably gone in 2022)
+      if (length(oldC2C$Tree.Name) == 0){
+        
+        oldDat <- NULL
+        
+        #if somehow just don't seem to have data in 2022 or 2023
+        if(!(tr %in% resampledTrees)){
+          print(t)###############################################################
+          print(paste("Error, no 2022 or 2023 local site condition data for", tr))
+          treeswErrors <- append(treeswErrors, tr)
+          next
+        }
+      }
+    }
+
+  } else if (tr %in% trees22){
+
+    oldDat <- S22Data[S22Data$TreeName == tr,]
+    oldDat <- oldDat[(!is.na(oldDat$CrownVigor) | !is.na(oldDat$FineTwigDieback)), ] #have at least some useful info
+
+    #If you have no useable HTHC data
+    if(length(oldDat$TreeName) == 0){
+      oldDat <- NULL
+      oldC2C <- NULL
+      
+      #if somehow just don't seem to have data
+      if(!(tr %in% resampledTrees)){
+        print(t)###############################################################
+        print(paste("Error, no old HTHC data or 2023 data for", tr))
+        treeswErrors <- append(treeswErrors, tr)
+        next
+      }
+      
+    } else {
+      oldC2C <- S22C2C[S22C2C$Previous.Name..HTHC. == tr,]
+      
+      #don't have the sheet data (probably gone in 2022)
+      if (length(oldC2C$Tree.Name) == 0){
+        
+        print(paste("Error, no main sheet data in 2022 for", tr))
+        oldDat <- NULL
+        
+        #if somehow just don't seem to have data
+        if(!(tr %in% resampledTrees)){
+          print(paste("Error, no local site condition data in 2022 or 2023", tr))
+          treeswErrors <- append(treeswErrors, tr)
+          next
+        }
+      }
+    }
+    
+  } else { #not in either database, new in 2023
+    oldDat <- NULL
+    oldC2C <- NULL
+
+  }
+  
+    #this is a tree that was resampled
+    if(tr %in% resampledTrees){
+      
+      #get the info that should be the same no matter how many 2023 samples you have
+      TotalTreeMat$Year[stoInd] <- 2023
+      TotalTreeMat$Date[stoInd] <- newDat$Date
+      TotalTreeMat$TreeName[stoInd] <- tr
+      TotalTreeMat$Segment[stoInd] <- newDat$Segment
+      
+      #general information
+      TotalTreeMat[stoInd, c("Genus", "Species", "TotalDBH", "LandUse", "SiteType", "PercentImperv", "Powerline", "Mulch", "MulchVolcano", "TreeGuard", "Gardenscape", "Mowing", "GrassDescription", "Grate", "Pruned", "HatrackPrune", "FlushCutPrune","GirdlingRoots", "RoadSideLift", "RoadSideCrack", "TrunkDamage", "LeafCurling")] <- newDat[(newDat$TreeName == tr),c("Genus", "Species", "DBHTot", "LandUse", "SiteType", "PercImperv", "Powerline", "Mulch", "MulchVolcano", "TreeGuard", "Gardenscape", "Mowing", "VegDescription", "Grate", "Pruned", "HatrackPrune", "FlushCutPrune","GirdlingRoots", "RdSiLift", "RdSiCrack", "TrunkDam", "LeafCurl")]
+      
+      #check to see if there are multiple trees
+      if(is.null(baseDat)){
+        
+        #tree health info
+        TotalTreeMat[stoInd,c("Discoloration", "Defoliation", "Dieback", "CrownVigor", "CrownLight")] <- newDat[1, c("Discoloration", "Defoliation", "Dieback", "CrownVigor", "CrownLightExposure")]
+      
+        stoInd <- stoInd + 1 #so you move down a row
+    
+        
+      } else { #have more than one sample for 2023
+        #tree health info
+        d_Avgs <- baseDat[1,] #just as a starting point
+        #get the average within one year (and remove NAs)
+        d_Avgs$Discoloration <- mean(na.omit(baseDat$Discoloration))
+        d_Avgs$CrownVigor <- mean(na.omit(baseDat$CrownVigor))
+        d_Avgs$Defoliation <- mean(na.omit(baseDat$Defoliation))
+        d_Avgs$Dieback <- mean(na.omit(baseDat$Dieback))
+        d_Avgs$CrownLightExposure <- mean(na.omit(baseDat$CrownLightExposure))
+    
+        #averaged between samples
+        TotalTreeMat[stoInd,c("Discoloration", "Defoliation", "Dieback", "CrownVigor", "CrownLight")] <- d_Avgs[1, c("Discoloration", "Defoliation", "Dieback", "CrownVigor", "CrownLightExposure")]
+        
+        stoInd <- stoInd + 1
+        
+      }
+    
+      # #########################Dive into the old data
+      if(is.null(oldDat)){
+        next #is a new tree
+      }
+    
+      dbk_ind <- match(oldDat$FineTwigDieback, HTHC_dict$Original)
+      oldDat$FineTwigDieback <- HTHC_dict$Simplified[dbk_ind]
+    
+      ######Now go through and deal with the old data
+      numOldSamp <- length(oldDat[,1])
+    
+      #more than one previous sample
+      if (numOldSamp > 1){
+    
+        dates<- format(as.Date(oldDat$VisitDate, format="%Y-%m-%d"),"%Y")
+    
+        #if you have one per year
+        if (length(unique(dates)) == numOldSamp){
+    
+          #####################2021
+          TotalTreeMat[stoInd, c("TotalDBH", "LandUse", "Powerline", "Mulch", "MulchVolcano", "TreeGuard", "GirdlingRoots", "RoadSideLift", "RoadSideCrack")] <- oldC2C[1,c("Total.DBH", "Land.Use.Type", "Powerline", "Mulch", "Mulch.volcano", "Protection.at.base", "Girdling.Roots")]
+          TotalTreeMat[stoInd,c("Discoloration", "Defoliation", "Dieback", "CrownVigor", "CrownLight")] <- oldDat[c(1,2)[dates == "2021"], c("LeafDiscoloration", "LeafDefoliation", "FineTwigDieback", "CrownVigor", "CrownLightExposure")]
+          TotalTreeMat$Year[stoInd] <- 2021
+          TotalTreeMat$TreeName[stoInd] <- tr
+          TotalTreeMat$Date[stoInd] <- oldDat$VisitDate[c(1,2)[dates == "2021"]]
+          TotalTreeMat$Segment[stoInd] <- newDat$Segment
+    
+          #pull from 2023
+          TotalTreeMat[stoInd, c("Genus", "Species", "SiteType", "PercentImperv", "Gardenscape", "Mowing", "GrassDescription","Grate", "Pruned", "HatrackPrune", "FlushCutPrune","RoadSideLift", "RoadSideCrack", "TrunkDamage")] <- newDat[(newDat$TreeName == tr),c("Genus", "Species", "SiteType", "PercImperv", "Gardenscape", "Mowing", "VegDescription", "Grate", "Pruned", "HatrackPrune", "FlushCutPrune","RdSiLift", "RdSiCrack", "TrunkDam")]
+    
+          stoInd <- stoInd + 1
+    
+          #################2022
+          TotalTreeMat[stoInd, c("TotalDBH", "LandUse", "Powerline", "Mulch", "MulchVolcano", "TreeGuard", "GirdlingRoots", "RoadSideLift", "RoadSideCrack")] <- oldC2C[1,c("Total.DBH", "Land.Use.Type", "Powerline", "Mulch", "Mulch.volcano", "Protection.at.base", "Girdling.Roots")]
+          TotalTreeMat[stoInd,c("Discoloration", "Defoliation", "Dieback", "CrownVigor", "CrownLight")] <- oldDat[c(1,2)[dates == "2022"], c("LeafDiscoloration", "LeafDefoliation", "FineTwigDieback", "CrownVigor", "CrownLightExposure")]
+          TotalTreeMat$Year[stoInd] <- 2022
+          TotalTreeMat$TreeName[stoInd] <- tr
+          TotalTreeMat$Date[stoInd] <- oldDat$VisitDate[c(1,2)[dates == "2022"]]
+          TotalTreeMat$Segment[stoInd] <- newDat$Segment
+    
+          #pull from 2023
+          TotalTreeMat[stoInd, c("Genus", "Species", "SiteType", "PercentImperv", "Gardenscape", "Mowing", "GrassDescription","Grate","Pruned", "HatrackPrune", "FlushCutPrune", "RoadSideLift", "RoadSideCrack", "TrunkDamage")] <- newDat[(newDat$TreeName == tr),c("Genus", "Species", "SiteType", "PercImperv", "Gardenscape", "Mowing", "VegDescription", "Grate", "Pruned", "HatrackPrune", "FlushCutPrune","RdSiLift", "RdSiCrack", "TrunkDam")]
+    
+          stoInd <- stoInd + 1
+    
+        } else { #have more than one sample for at least one year
+    
+          for(y in 1:length(unique(dates))){ #for each year
+    
+            d <- unique(dates)[y]
+    
+            #get all the items in a given year
+            d_inds <- c(1:length(dates))[dates == d]
+    
+            TotalTreeMat$Year[stoInd] <- d
+    
+            if(length(d_inds) > 1){ #if this year has more than one sample
+    
+              d_oldDat <- oldDat[d_inds, ]
+              d_Avgs <- d_oldDat[1,] #just as a starting point
+              #get the average within one year (and remove NAs)
+              d_Avgs$LeafDiscoloration <- mean(na.omit(d_oldDat$LeafDiscoloration))
+              d_Avgs$CrownVigor <- mean(na.omit(d_oldDat$CrownVigor))
+              d_Avgs$LeafDefoliation <- mean(na.omit(d_oldDat$LeafDefoliation))
+              d_Avgs$FineTwigDieback <- mean(na.omit(d_oldDat$FineTwigDieback))
+              d_Avgs$CrownLightExposure <- mean(na.omit(d_oldDat$CrownLightExposure))
+    
+              #averaged between samples
+              TotalTreeMat[stoInd,c("Discoloration", "Defoliation", "Dieback", "CrownVigor", "CrownLight")] <- d_Avgs[1, c("LeafDiscoloration", "LeafDefoliation", "FineTwigDieback", "CrownVigor", "CrownLightExposure")]
+              TotalTreeMat$Date[stoInd] <- d_Avgs$VisitDate[1]
+    
+              TotalTreeMat[stoInd, c("TotalDBH", "LandUse", "Powerline", "Mulch", "MulchVolcano", "TreeGuard", "GirdlingRoots", "RoadSideLift", "RoadSideCrack")] <- oldC2C[1,c("Total.DBH", "Land.Use.Type", "Powerline", "Mulch", "Mulch.volcano", "Protection.at.base", "Girdling.Roots")]
+    
+              #Pull from 2023
+              TotalTreeMat[stoInd, c("Genus", "Species", "SiteType", "PercentImperv", "Gardenscape", "Mowing", "GrassDescription","Grate","Pruned", "HatrackPrune", "FlushCutPrune", "RoadSideLift", "RoadSideCrack", "TrunkDamage")] <- newDat[(newDat$TreeName == tr),c("Genus", "Species", "SiteType", "PercImperv", "Gardenscape", "Mowing", "VegDescription", "Grate", "Pruned", "HatrackPrune", "FlushCutPrune","RdSiLift", "RdSiCrack", "TrunkDam")]
+              TotalTreeMat$TreeName[stoInd] <- tr
+              TotalTreeMat$Segment[stoInd] <- newDat$Segment
+    
+              stoInd <- stoInd + 1
+    
+            } else { #only one measurement for this year
+    
+              TotalTreeMat[stoInd, c("TotalDBH", "LandUse", "Powerline", "Mulch", "MulchVolcano", "TreeGuard", "GirdlingRoots", "RoadSideLift", "RoadSideCrack")] <- oldC2C[1,c("Total.DBH", "Land.Use.Type", "Powerline", "Mulch", "Mulch.volcano", "Protection.at.base", "Girdling.Roots")]
+              TotalTreeMat[stoInd,c("Discoloration", "Defoliation", "Dieback", "CrownVigor", "CrownLight")] <- oldDat[d_inds, c("LeafDiscoloration", "LeafDefoliation", "FineTwigDieback", "CrownVigor", "CrownLightExposure")]
+              TotalTreeMat$TreeName[stoInd] <- tr
+              TotalTreeMat$Date[stoInd] <- oldDat$VisitDate[d_inds]
+              TotalTreeMat$Segment[stoInd] <- newDat$Segment
+    
+              #pull from 2023
+              TotalTreeMat[stoInd, c("Genus", "Species", "SiteType", "PercentImperv", "Gardenscape", "Mowing", "GrassDescription", "Grate","Pruned", "HatrackPrune", "FlushCutPrune","RoadSideLift", "RoadSideCrack", "TrunkDamage")] <- newDat[(newDat$TreeName == tr),c("Genus", "Species", "SiteType", "PercImperv", "Gardenscape", "Mowing", "VegDescription", "Grate", "Pruned", "HatrackPrune", "FlushCutPrune","RdSiLift", "RdSiCrack", "TrunkDam")]
+    
+              stoInd <- stoInd + 1
+    
+            } #how many observations per year
+          } #years loop
+    
+        } #have more than one sample for at least one year
+    
+      } else { #only one old sample
+    
+        TotalTreeMat[stoInd, c("TotalDBH", "LandUse", "Powerline", "Mulch", "MulchVolcano", "TreeGuard", "GirdlingRoots", "RoadSideLift", "RoadSideCrack")] <- oldC2C[1,c("Total.DBH", "Land.Use.Type", "Powerline", "Mulch", "Mulch.volcano", "Protection.at.base", "Girdling.Roots")]
+        TotalTreeMat[stoInd,c("Discoloration", "Defoliation", "Dieback", "CrownVigor", "CrownLight")] <- oldDat[1, c("LeafDiscoloration", "LeafDefoliation", "FineTwigDieback", "CrownVigor", "CrownLightExposure")]
+        TotalTreeMat$Year[stoInd] <- format(as.Date(oldDat$VisitDate, format="%Y-%m-%d"),"%Y")
+        TotalTreeMat$TreeName[stoInd] <- tr
+        TotalTreeMat$Date[stoInd] <- oldDat$VisitDate[1]
+        TotalTreeMat$Segment[stoInd] <- newDat$Segment
+    
+        #pull from 2023
+        TotalTreeMat[stoInd, c("Genus", "Species", "SiteType", "PercentImperv", "Gardenscape", "Mowing", "GrassDescription", "Grate","Pruned", "HatrackPrune", "FlushCutPrune", "RoadSideLift", "RoadSideCrack", "TrunkDamage")] <- newDat[(newDat$TreeName == tr),c("Genus", "Species", "SiteType", "PercImperv", "Gardenscape", "Mowing", "VegDescription", "Grate", "Pruned", "HatrackPrune", "FlushCutPrune","RdSiLift", "RdSiCrack", "TrunkDam")]
+    
+        stoInd <- stoInd + 1
+    
+    
+      }#number of old samples
+      
+    } else if (is.null(oldDat)) {########################just 2023 data
+      ##############################Pull 2023 data
+      #newDat <- S23Data[S23Data$TreeName == tr,]
+      TotalTreeMat$Year[stoInd] <- 2023
+      TotalTreeMat$Date[stoInd] <- newDat$Date
+      TotalTreeMat$TreeName[stoInd] <- tr
+      TotalTreeMat$Segment[stoInd] <- newDat$Segment
+      #general information
+    
+      TotalTreeMat[stoInd, c("Genus", "Species", "TotalDBH", "LandUse", "SiteType", "PercentImperv", "Powerline", "Mulch", "MulchVolcano", "TreeGuard", "Gardenscape", "Mowing", "GrassDescription", "Grate","Pruned", "HatrackPrune", "FlushCutPrune","GirdlingRoots", "RoadSideLift", "RoadSideCrack", "TrunkDamage", "LeafCurling")] <- newDat[(newDat$TreeName == tr),c("Genus", "Species", "DBHTot", "LandUse", "SiteType", "PercImperv", "Powerline", "Mulch", "MulchVolcano", "TreeGuard", "Gardenscape", "Mowing", "VegDescription", "Grate", "Pruned", "HatrackPrune", "FlushCutPrune","GirdlingRoots", "RdSiLift", "RdSiCrack", "TrunkDam", "LeafCurl")]
+    
+      
+      #check to see if there are multiple trees
+      if(is.null(baseDat)){
+        
+        #tree health info
+        TotalTreeMat[stoInd,c("Discoloration", "Defoliation", "Dieback", "CrownVigor", "CrownLight")] <- newDat[1, c("Discoloration", "Defoliation", "Dieback", "CrownVigor", "CrownLightExposure")]
+      
+        stoInd <- stoInd + 1 #so you move down a row
+    
+        
+      } else { #have more than one sample for 2023
+        #tree health info
+        d_Avgs <- baseDat[1,] #just as a starting point
+        #get the average within one year (and remove NAs)
+        d_Avgs$Discoloration <- mean(na.omit(baseDat$Discoloration))
+        d_Avgs$CrownVigor <- mean(na.omit(baseDat$CrownVigor))
+        d_Avgs$Defoliation <- mean(na.omit(baseDat$Defoliation))
+        d_Avgs$Dieback <- mean(na.omit(baseDat$Dieback))
+        d_Avgs$CrownLightExposure <- mean(na.omit(baseDat$CrownLightExposure))
+    
+        #averaged between samples
+        TotalTreeMat[stoInd,c("Discoloration", "Defoliation", "Dieback", "CrownVigor", "CrownLight")] <- d_Avgs[1, c("Discoloration", "Defoliation", "Dieback", "CrownVigor", "CrownLightExposure")]
+        
+        stoInd <- stoInd + 1
+        
+      }
+      
+      
+    } else { ########################################no 2023 data but do have old data
+      
+      dbk_ind <- match(oldDat$FineTwigDieback, HTHC_dict$Original)
+      oldDat$FineTwigDieback <- HTHC_dict$Simplified[dbk_ind]
+    
+      ######Now go through and deal with the old data
+      numOldSamp <- length(oldDat[,1])
+    
+      #more than one previous sample
+      if (numOldSamp > 1){
+    
+        dates<- format(as.Date(oldDat$VisitDate, format="%Y-%m-%d"),"%Y")
+    
+        #if you have one per year
+        if (length(unique(dates)) == numOldSamp){
+    
+          #####################2021
+          TotalTreeMat[stoInd, c("TotalDBH", "LandUse", "Powerline", "Mulch", "MulchVolcano", "TreeGuard", "GirdlingRoots", "RoadSideLift", "RoadSideCrack")] <- oldC2C[1,c("Total.DBH", "Land.Use.Type", "Powerline", "Mulch", "Mulch.volcano", "Protection.at.base", "Girdling.Roots")]
+          TotalTreeMat[stoInd,c("Discoloration", "Defoliation", "Dieback", "CrownVigor", "CrownLight")] <- oldDat[c(1,2)[dates == "2021"], c("LeafDiscoloration", "LeafDefoliation", "FineTwigDieback", "CrownVigor", "CrownLightExposure")]
+          TotalTreeMat$Year[stoInd] <- 2021
+          TotalTreeMat$TreeName[stoInd] <- tr
+          TotalTreeMat$Date[stoInd] <- oldDat$VisitDate[c(1,2)[dates == "2021"]]
+          TotalTreeMat$Segment[stoInd] <- newDat$Segment
+    
+          #Pull from 2023
+          if(!tr %in% trees23){ #do not have info for that tree
+            
+            TotalTreeMat[stoInd, c("Genus", "Species", "SiteType")] <- oldC2C[1,c("Genus", "Species",  "Site.type")]
+            TotalTreeMat[stoInd, c("PercentImperv", "Gardenscape", "Mowing", "GrassDescription", "Grate","Pruned", "HatrackPrune", "FlushCutPrune","RoadSideLift", "RoadSideCrack", "TrunkDamage")] <- NA
+            
+          } else {
+            TotalTreeMat[stoInd, c("Genus", "Species", "SiteType", "PercentImperv", "Gardenscape", "Mowing", "GrassDescription", "Grate","Pruned", "HatrackPrune", "FlushCutPrune","RoadSideLift", "RoadSideCrack", "TrunkDamage")] <- newDat[(newDat$TreeName == tr),c("Genus", "Species",  "SiteType", "PercImperv", "Gardenscape", "Mowing", "VegDescription","Grate","Pruned", "HatrackPrune", "FlushCutPrune", "RdSiLift", "RdSiCrack", "TrunkDam")]
+          }
+    
+          stoInd <- stoInd + 1
+    
+          #################2022
+          TotalTreeMat[stoInd, c("TotalDBH", "LandUse", "Powerline", "Mulch", "MulchVolcano", "TreeGuard", "GirdlingRoots", "RoadSideLift", "RoadSideCrack")] <- oldC2C[1,c("Total.DBH", "Land.Use.Type", "Powerline", "Mulch", "Mulch.volcano", "Protection.at.base", "Girdling.Roots")]
+          TotalTreeMat[stoInd,c("Discoloration", "Defoliation", "Dieback", "CrownVigor", "CrownLight")] <- oldDat[c(1,2)[dates == "2022"], c("LeafDiscoloration", "LeafDefoliation", "FineTwigDieback", "CrownVigor", "CrownLightExposure")]
+          TotalTreeMat$Year[stoInd] <- 2022
+          TotalTreeMat$TreeName[stoInd] <- tr
+          TotalTreeMat$Date[stoInd] <- oldDat$VisitDate[c(1,2)[dates == "2022"]]
+          TotalTreeMat$Segment[stoInd] <- newDat$Segment
+    
+          #Pull from 2023
+          if(!tr %in% trees23){ #do not have info for that tree
+            
+            TotalTreeMat[stoInd, c("Genus", "Species", "SiteType")] <- oldC2C[1,c("Genus", "Species",  "Site.type")]
+            TotalTreeMat[stoInd, c("PercentImperv", "Gardenscape", "Mowing", "GrassDescription","Grate", "Pruned", "HatrackPrune", "FlushCutPrune","RoadSideLift", "RoadSideCrack", "TrunkDamage")] <- NA
+            
+          } else {
+            TotalTreeMat[stoInd, c("Genus", "Species", "SiteType", "PercentImperv", "Gardenscape", "Mowing", "GrassDescription", "Grate","Pruned", "HatrackPrune", "FlushCutPrune","RoadSideLift", "RoadSideCrack", "TrunkDamage")] <- newDat[(newDat$TreeName == tr),c("Genus", "Species",  "SiteType", "PercImperv", "Gardenscape", "Mowing", "VegDescription","Grate","Pruned", "HatrackPrune", "FlushCutPrune", "RdSiLift", "RdSiCrack", "TrunkDam")]
+          }
+    
+          stoInd <- stoInd + 1
+    
+        } else { #have more than one sample for at least one year
+    
+          for(y in 1:length(unique(dates))){ #for each year
+    
+            d <- unique(dates)[y]
+    
+            #get all the items in a given year
+            d_inds <- c(1:length(dates))[dates == d]
+    
+            TotalTreeMat$Year[stoInd] <- d
+    
+            if(length(d_inds) > 1){ #if this year has more than one sample
+    
+              d_oldDat <- oldDat[d_inds, ]
+              d_Avgs <- d_oldDat[1,] #just as a starting point
+              #get the average within one year (and remove NAs)
+              d_Avgs$LeafDiscoloration <- mean(na.omit(d_oldDat$LeafDiscoloration))
+              d_Avgs$CrownVigor <- mean(na.omit(d_oldDat$CrownVigor))
+              d_Avgs$LeafDefoliation <- mean(na.omit(d_oldDat$LeafDefoliation))
+              d_Avgs$FineTwigDieback <- mean(na.omit(d_oldDat$FineTwigDieback))
+              d_Avgs$CrownLightExposure <- mean(na.omit(d_oldDat$CrownLightExposure))
+    
+              #averaged between samples
+              TotalTreeMat[stoInd,c("Discoloration", "Defoliation", "Dieback", "CrownVigor", "CrownLight")] <- d_Avgs[1, c("LeafDiscoloration", "LeafDefoliation", "FineTwigDieback", "CrownVigor", "CrownLightExposure")]
+              TotalTreeMat$Date[stoInd] <- d_Avgs$VisitDate[1]
+    
+              TotalTreeMat[stoInd, c("TotalDBH", "LandUse", "Powerline", "Mulch", "MulchVolcano", "TreeGuard", "GirdlingRoots", "RoadSideLift", "RoadSideCrack")] <- oldC2C[1,c("Total.DBH", "Land.Use.Type", "Powerline", "Mulch", "Mulch.volcano", "Protection.at.base", "Girdling.Roots")]
+              
+              TotalTreeMat$TreeName[stoInd] <- tr
+              TotalTreeMat$Segment[stoInd] <- oldC2C$Street.Segment
+    
+              #Pull from 2023
+              if(!tr %in% trees23){ #do not have info for that tree
+                
+                TotalTreeMat[stoInd, c("Genus", "Species", "SiteType")] <- oldC2C[1,c("Genus", "Species",  "Site.type")]
+                TotalTreeMat[stoInd, c("PercentImperv", "Gardenscape", "Mowing", "GrassDescription", "Grate","Pruned", "HatrackPrune", "FlushCutPrune","RoadSideLift", "RoadSideCrack", "TrunkDamage")] <- NA
+                
+              } else {
+                TotalTreeMat[stoInd, c("Genus", "Species", "SiteType", "PercentImperv", "Gardenscape", "Mowing", "GrassDescription","Grate","Pruned", "HatrackPrune", "FlushCutPrune", "RoadSideLift", "RoadSideCrack", "TrunkDamage")] <- newDat[(newDat$TreeName == tr),c("Genus", "Species",  "SiteType", "PercImperv", "Gardenscape", "Mowing", "VegDescription","Grate","Pruned", "HatrackPrune", "FlushCutPrune", "RdSiLift", "RdSiCrack", "TrunkDam")]
+              }
+              
+              stoInd <- stoInd + 1
+    
+            } else { #only one measurement for this year
+    
+              TotalTreeMat[stoInd, c("TotalDBH", "LandUse", "Powerline", "Mulch", "MulchVolcano", "TreeGuard", "GirdlingRoots", "RoadSideLift", "RoadSideCrack")] <- oldC2C[1,c("Total.DBH", "Land.Use.Type", "Powerline", "Mulch", "Mulch.volcano", "Protection.at.base", "Girdling.Roots")]
+              TotalTreeMat[stoInd,c("Discoloration", "Defoliation", "Dieback", "CrownVigor", "CrownLight")] <- oldDat[d_inds, c("LeafDiscoloration", "LeafDefoliation", "FineTwigDieback", "CrownVigor", "CrownLightExposure")]
+              TotalTreeMat$TreeName[stoInd] <- tr
+              TotalTreeMat$Date[stoInd] <- oldDat$VisitDate[d_inds]
+              TotalTreeMat$Segment[stoInd] <- newDat$Segment
+    
+              #Pull from 2023
+              if(!tr %in% trees23){ #do not have info for that tree
+                
+                TotalTreeMat[stoInd, c("Genus", "Species", "SiteType")] <- oldC2C[1,c("Genus", "Species",  "Site.type")]
+                TotalTreeMat[stoInd, c("PercentImperv", "Gardenscape", "Mowing", "GrassDescription","Grate", "Pruned", "HatrackPrune", "FlushCutPrune","RoadSideLift", "RoadSideCrack", "TrunkDamage")] <- NA
+                
+              } else {
+                TotalTreeMat[stoInd, c("Genus", "Species", "SiteType", "PercentImperv", "Gardenscape", "Mowing", "GrassDescription", "Grate","Pruned", "HatrackPrune", "FlushCutPrune","RoadSideLift", "RoadSideCrack", "TrunkDamage")] <- newDat[(newDat$TreeName == tr),c("Genus", "Species",  "SiteType", "PercImperv", "Gardenscape", "Mowing", "VegDescription","Grate","Pruned", "HatrackPrune", "FlushCutPrune", "RdSiLift", "RdSiCrack", "TrunkDam")]
+              }
+    
+              stoInd <- stoInd + 1
+    
+            } #how many observations per year
+          } #years loop
+    
+        } #have more than one sample for at least one year
+    
+      } else { #only one old sample
+    
+        TotalTreeMat[stoInd, c("TotalDBH", "LandUse", "Powerline", "Mulch", "MulchVolcano", "TreeGuard", "GirdlingRoots", "RoadSideLift", "RoadSideCrack")] <- oldC2C[1,c("Total.DBH", "Land.Use.Type", "Powerline", "Mulch", "Mulch.volcano", "Protection.at.base", "Girdling.Roots")]
+        TotalTreeMat[stoInd,c("Discoloration", "Defoliation", "Dieback", "CrownVigor", "CrownLight")] <- oldDat[1, c("LeafDiscoloration", "LeafDefoliation", "FineTwigDieback", "CrownVigor", "CrownLightExposure")]
+        TotalTreeMat$Year[stoInd] <- format(as.Date(oldDat$VisitDate, format="%Y-%m-%d"),"%Y")
+        TotalTreeMat$Date[stoInd] <- oldDat$VisitDate
+        TotalTreeMat$TreeName[stoInd] <- tr
+        TotalTreeMat$Segment[stoInd] <- oldC2C$Street.Segment
+    
+        #Pull from 2023
+        if(!tr %in% trees23){ #do not have info for that tree
+          
+          TotalTreeMat[stoInd, c("Genus", "Species", "SiteType")] <- oldC2C[1,c("Genus", "Species",  "Site.type")]
+          TotalTreeMat[stoInd, c("PercentImperv", "Gardenscape", "Mowing", "GrassDescription","Grate", "Pruned", "HatrackPrune", "FlushCutPrune","RoadSideLift", "RoadSideCrack", "TrunkDamage")] <- NA
+          
+        } else {
+          TotalTreeMat[stoInd, c("Genus", "Species", "SiteType", "PercentImperv", "Gardenscape", "Mowing", "GrassDescription", "Grate","Pruned", "HatrackPrune", "FlushCutPrune","RoadSideLift", "RoadSideCrack", "TrunkDamage")] <- newDat[(newDat$TreeName == tr),c("Genus", "Species",  "SiteType", "PercImperv", "Gardenscape", "Mowing", "VegDescription","Grate","Pruned", "HatrackPrune", "FlushCutPrune", "RdSiLift", "RdSiCrack", "TrunkDam")]
+        }
+    
+        stoInd <- stoInd + 1
+    
+    
+      }#number of old samples
+    }
+    
+  
+
+
+} #end tree loop
+
+TotalTreeMat<- TotalTreeMat[TotalTreeMat$TreeName != 0,]
+write.csv(TotalTreeMat,"../01Data/Chicago/091223AllYearsComb.csv")
+
+
+```
+
+##Trees without info
+* 46-01-FRUNK-089 does not have HTHC data, did not sample in 2022 or 2023 so that is what it is (maybe was removed?)
+* 52-01-CECA-024 - exclude because not really on street segment
+* 52-01-CECA-023 - exclude because not really on street segment
+* 324-AEHI-021 - NEED TO CHECK
+  - fixed, name was wrong in 2022 sheet
+* 157-HIUN-015 - decided to exclude hibiscus, is correct
+* 281-ACXF-024 - have 2023 data, just no 2022 health data  (1174)
+* 281-ACXF-025 - have 2023 data, just no 2022 health data (1175)
+* 281-ACXF-026 - have 2023 data, just no 2022 health data (1176)
+* 281-ACXF-027 - have 2023 data, just no 2022 health data (1177)
+* 157-CAUN-049 (should be 157-CACA-049), fixed 2021 data (figure out 157-MOAL-049) (502, 604)
+* 52-01-QUBI-002 - was missing a zero (189)
+* 244-SYRE-012 - messed up name in new dataset

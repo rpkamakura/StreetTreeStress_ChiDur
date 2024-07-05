@@ -1,0 +1,257 @@
+---
+title: "Combine Data 3 Years"
+output: html_document
+date: "2023-07-28"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Need to average within years
+
+```{r load data}
+
+basicFilepath <- "../01Data/Durham/Raw/"
+
+##2023 data
+S23Campus <- read.csv(paste(basicFilepath, "DukeCampusSheetS23_edit.csv", sep="")) #use the one with inaccessible/missing trees removed
+S23Street <- read.csv(paste(basicFilepath, "DurhamStreetMainSheetS23_all.csv", sep=""))
+S23Park <- read.csv(paste(basicFilepath, "ParkTreesSheetS23.csv", sep=""))
+
+
+##2022 data
+S22MainSheet <- read.csv(paste(basicFilepath, "090723DurhamStreetMainSheetS22.csv", sep=""))
+S22HTHC <- read.csv(paste(basicFilepath, "090723DurhamHTHCRS2.csv", sep=""))
+
+```
+
+##Combine S23 Data
+
+```{r combine S23}
+S23_cols <- c("Date", "TreeName", "Segment", "Genus", "Species", "DBHTot", "LandUse", "SiteType", "PercImperv", "Street", "Sidewalk", "Powerline", "Mulch", "MulchVolcano", "TreeGuard", "GatorBag", "Pruned", "HatrackPrune", "FlushCutPrune", "TearBarkPrune", "Gardenscape", "Mowing", "VegDescription", "RootsVis", "FungalConch", "RdSiLift", "RdSiCrack", "BroDeadBranch", "TrunkDam", "LeafCurl", "Discoloration", "Defoliation", "Dieback", "CrownVigor", "Transparency", "CrownLightExposure", "Dead", "Missing")
+nRws <- length(S23Street$Date) + length(S23Campus$Date) + length(S23Park$Date)
+
+S23Data <- as.data.frame(matrix(0, nrow = nRws, ncol = length(S23_cols)))
+names(S23Data) <- S23_cols
+
+#add the data (for ease/visibility)
+#basic info
+S23Data$Date <- c(S23Street$Date, S23Campus$Date, S23Park$Date)
+S23Data$TreeName <- c(S23Street$Tree.Name, S23Campus$Tree.Name, S23Park$Tree.Name)
+S23Data$Segment <- c(S23Street$Street.Segment, rep("Duke", length(S23Campus[,1])), rep("Park", length(S23Park[,1])))
+S23Data$Genus <- c(S23Street$Genus, S23Campus$Genus, S23Park$Genus)
+S23Data$Species <- c(S23Street$Species, S23Campus$Species, S23Park$Species)
+S23Data$DBHTot <- c(S23Street$Total.DBH, S23Campus$Total.DBH, S23Park$Total.DBH)
+
+#location
+S23Data$LandUse <- c(S23Street$Land.Use.Type, rep("INST", length(S23Campus[,1])), rep("MP", length(S23Park[,1])))
+S23Data$SiteType <- c(S23Street$Site.type, S23Campus$Site.type, S23Park$Site.type)
+S23Data$PercImperv <- c(S23Street$Percent.Imperv.in.Root.Zone, S23Campus$Percent.Imperv.in.Root.Zone, S23Park$Percent.Imperv.in.Root.Zone)
+S23Data$Street <- c(S23Street$Street, S23Campus$Street, S23Park$Street)
+S23Data$Sidewalk <- c(S23Street$Sidewalk, S23Campus$Sidewalk, S23Park$Sidewalk)
+S23Data$Powerline <- c(S23Street$Powerline, S23Campus$Powerline, S23Park$Powerline)
+
+#Cues to Care
+S23Data$Mulch <- c(S23Street$Mulch, S23Campus$Mulch, S23Park$Mulch)
+S23Data$MulchVolcano <- c(S23Street$Mulch.Volcano, S23Campus$Mulch.Volcano, S23Park$Mulch.Volcano)
+S23Data$TreeGuard <- c(S23Street$Tree.guard, S23Campus$Tree.guard, S23Park$Tree.guard)
+S23Data$GatorBag <- c(S23Street$Gator.bag, S23Campus$Gator.bag, S23Park$Gator.bag)
+S23Data$Pruned <- c(S23Street$Pruned, S23Campus$Pruned, S23Park$Pruned)
+S23Data$HatrackPrune <- c(S23Street$Prune...hatrack, S23Campus$Prune...hatrack, S23Park$Prune...hatrack)
+S23Data$FlushCutPrune <- c(S23Street$Prune...flush.cut, S23Campus$Prune...flush.cut, S23Park$Prune...flush.cut)
+S23Data$TearBarkPrune <- c(S23Street$Prune...tear.bark, S23Campus$Tree.Name, S23Park$Prune...tear.bark)
+S23Data$Gardenscape <- c(S23Street$Gardenscape, S23Campus$Gardenscape, S23Park$Gardenscape)
+S23Data$Mowing <- c(S23Street$Mowing, S23Campus$Mowing, S23Park$Mowing)
+S23Data$VegDescription <- c(S23Street$Grass.Description, S23Campus$Grass.Description, S23Park$Grass.Description)
+
+#Damage
+S23Data$RootsVis <- c(S23Street$Roots.visible.above.soil, S23Campus$Roots.visible.above.soil, S23Park$Roots.visible.above.soil)
+S23Data$FungalConch <- c(S23Street$Fungal.Conch, S23Campus$Fungal.Conch, S23Park$Fungal.Conch)
+S23Data$RdSiLift <- c(S23Street$Road.Sidewalk.Lift, S23Campus$Road.Sidewalk.Lift, S23Park$Road.Sidewalk.Lift)
+S23Data$RdSiCrack <- c(S23Street$Road.Sidewalk.crack, S23Campus$Road.Sidewalk.crack, S23Park$Road.Sidewalk.crack)
+S23Data$BroDeadBranch <- c(S23Street$Broken.or.Dead.Branches.in.crown, S23Campus$Broken.or.Dead.Branches.in.crown, S23Park$Broken.Branches.in.crown)
+S23Data$TrunkDam <- c(S23Street$Trunk.damage, S23Campus$Trunk.damage, S23Park$Trunk.damage)
+
+#Health
+S23Data$LeafCurl <- c(S23Street$Leaf.curling.or.Wrinkling, S23Campus$Leaf.curling.or.Wrinkling, S23Park$Leaf.curling.or.Wrinkling)
+S23Data$Discoloration <- c(S23Street$Discoloration, S23Campus$Discoloration, S23Park$Discoloration)
+S23Data$Defoliation <- c(S23Street$Defoliation, S23Campus$Defoliation, S23Park$Defoliation)
+S23Data$Dieback <- c(S23Street$Dieback, S23Campus$Dieback, S23Park$Dieback)
+S23Data$CrownVigor <- c(S23Street$Crown.Vigor, S23Campus$Crown.Vigor, S23Park$Crown.Vigor)
+S23Data$CrownLightExposure <- c(S23Street$Crown.Light.Exposure, S23Campus$Crown.Light.Exposure, S23Park$Crown.Light.Exposure)
+
+#Extra notes
+S23Data$Dead <- c(S23Street$Dead., S23Campus$Dead, S23Park$Dead)
+S23Data$Missing <- c(S23Street$Missing.or.Removed, S23Campus$Removed..Missing..or.Inaccessible, rep(0, length(S23Park$Tree.Name)))
+
+```
+
+##Combine 2022 data
+
+```{r combine 22}
+
+#to manage dieback numbers
+h1 <- c(seq(0,100, 5), NA)
+h1[1] <- 1
+h2 <- c(1:21, NA)
+HTHC_dict <- as.data.frame(matrix(c(h1,h2), ncol=2, nrow=22, byrow=FALSE))
+names(HTHC_dict) <- c("Original", "Simplified")
+
+
+#get info to create dataframe
+tHTHC <- unique(S22HTHC$NAME)
+tMain <- unique(S22MainSheet$Tree.Name)
+
+trees <- tHTHC[tHTHC %in% tMain]
+toCheck <- tHTHC[!(tHTHC %in% tMain)]
+
+#make storage dataframe
+S22DatCols <- c("Date", "TreeName", "Segment", "Genus", "Species", "DBHTot", "LandUse", "SiteType", "PercImperv", "Street", "Sidewalk", "Powerline", "Mulch", "MulchVolcano", "TreeGuard", "GatorBag", "Pruned", "HatrackPrune", "FlushCutPrune", "TearBarkPrune", "Gardenscape", "Mowing", "VegDescription", "RootsVis", "FungalConch", "RdSiLift", "RdSiCrack", "BroDeadBranch", "TrunkDam", "LeafCurl", "Discoloration", "Defoliation", "Dieback", "CrownVigor", "Transparency", "CrownLightExposure", "Dead", "Missing")
+nRws <- length(trees)*2 #in case sampled twice, is overkill
+S22Data <- as.data.frame(matrix(NA, ncol=length(S22DatCols), nrow=nRws))
+names(S22Data)  <- S22DatCols
+
+trees2Check <- c()
+
+stoInd <- 1
+
+#go through each of the trees with both kinds of data
+for (t in 1:length(trees)){
+  
+  trNm <- trees[t]
+  
+  tdatHTHC <- S22HTHC[c(S22HTHC$NAME == trNm & !is.na(S22HTHC$CROWN_VIGOR)),]
+  tdatMainS <- S22MainSheet[S22MainSheet$Tree.Name == trNm,]
+  tdat23 <- S23Data[S23Data$TreeName == trNm,]
+  
+  ##get the number of entries for this tree
+  nSample <- length(tdatHTHC$OBJECTID)
+  
+  
+  if(length(nSample) == 0){
+    
+    print(paste("Error, no HTHC data for", trNm, "tree index:", t))
+    next
+    
+  } else if (length(nSample) == 1){ #tree only sampled once
+    S22Data[stoInd,c("Date", "TreeName", "Segment", "Genus", "Species", "DBHTot", "LandUse", "SiteType", "Street", "Sidewalk", "Powerline", "Mulch", "TreeGuard", "GatorBag", "Pruned", "FungalConch", "BroDeadBranch", "TrunkDam", "Missing")] <- tdatMainS[,c("Date", "Tree.Name", "Street.Segment", "Genus", "Species", "Total.DBH", "Land.Use.Type", "Site.type", "Street", "Sidewalk", "Powerline", "Mulch", "Protection.at.tree.base", "Tree.diaper", "Fungal.Conch", "Broken.Branches", "TrunkDamage", "Removed")]
+    S22Data[stoInd,c("Discoloration", "Defoliation", "Dieback", "CrownVigor", "Transparency", "CrownLightExposure")] <- tdatHTHC[, c("LEAF_DISCOLORATIONF", "LEAF_DEFOLIATIONF", "FINE_TWIG_DIEBACKF", "CROWN_VIGOR", "CROWN_DENSITY_TRANS", "CROWN_LIGHT_EXPOSURE")]
+    
+    dbk_ind <- match(S22Data$Dieback[stoInd], HTHC_dict$Original)
+    S22Data$Dieback[stoInd] <- HTHC_dict$Simplified[dbk_ind]
+    
+    #check to see if you can pull 2023 data
+    if (length(tdat23$Date) == 0){
+      print(paste("No 2023 data for", trNm, "iteration number:", t))
+      trees2Check <- append(trNm, trees2Check )
+      
+    } else { #have 2023 data
+      
+      S22Data[stoInd, c("LandUse", "SiteType", "PercImperv", "MulchVolcano", "HatrackPrune", "FlushCutPrune", "TearBarkPrune", "Gardenscape", "VegDescription", "RootsVis", "RdSiLift", "RdSiCrack", "LeafCurl")] <- tdat23[,c("LandUse", "SiteType", "PercImperv", "MulchVolcano", "HatrackPrune", "FlushCutPrune", "TearBarkPrune", "Gardenscape", "VegDescription", "RootsVis", "RdSiLift", "RdSiCrack", "LeafCurl")]
+    } #if/else to check 2023 data
+    
+    stoInd <- stoInd + 1
+    
+  } else{ #more than one sample for this tree
+    print(paste("More than one sample for tree", trNm, "tree number:",t))
+    
+    stop()
+    
+  }
+  
+  ##add the relevant info in
+  
+  
+}
+
+#get rid of extra rows
+S22Data <- S22Data[!is.na(S22Data$TreeName), ]
+
+
+```
+
+Have more trees than it seems like we should without 2023 data, worth checking
+* S-O21-PRPE-023 should be there
+* S-O21-ACCA-038 should be there (was removed)
+* S-O21-PRPE-024 should be there
+* S-O21-QUUN-034 should be there
+* S-Q21-GYDI-055 should be there (not in the combined list)
+* S-R21-CRVI-049 should be there
+* S-R21-ULAM-020 should be there
+
+To exclude:
+* a bunch of trees from O18, every tree with a tree number > 19
+* S-P21-ZESE-030 (not in the city inventory but seems like a street tree..., get locations from HTHC?)
+* S-Q21-CACA-013
+* S-Q21-CACA-014
+* S-Q21-CACA-015
+* S-Q21-CACA-016
+* S-R21-CACA-009
+
+To check (maybe worth doing some fieldwork? at least for percent imperv)
+* S-O21-QUPH-018 (not on map)
+* S-P21-PRUN-057 seemingly (not on map...)
+* S-P21-ZESE-033 (not on map...)
+* S-P21-ZESE-034 (not on map)
+* S-R21-CRVI-011 (not on map)
+* S-S22-ZESE-014 (not on map and the numbering here is really odd)
+* S-S22-ZESE-015 (not on map and the numbering here is really odd)
+* S-U16-LAUN-001 (not on map)
+* S-U16-QUUN-002 (not on map)
+* S-U16-PITA-003 (not on map)
+* S-U21-LIST-003 (not on map)
+* marked these on the map here - https://www.google.com/maps/d/edit?mid=1WExk3A4u77dFKMYlnTjlG9e2Z7wqWM8&ll=36.017090616540244%2C-78.90570811222469&z=12 
+
+re-ran, things to check
+* S-O21-ACSA-058 (removed)
+* S-O21-LAUN-047 (removed)
+
+
+
+
+
+##Now normalize them all and pull them together
+
+```{r pull in tree data}
+
+##pull in and combine the datasets
+trees23 <- unique(S23Data$TreeName)
+trees22 <- unique(S22Data$TreeName)
+
+###Get all the tree names combined
+AllTrees <- unique(c(trees23, trees22))
+
+#get list of trees that were resampled
+resampledTrees <- S23Data$TreeName[S23Data$TreeName %in% c(trees22)]
+
+#for getting the dieback for the old data
+h1 <- c(seq(0,100, 5), NA)
+h1[1] <- 1
+h2 <- c(1:21, NA)
+HTHC_dict <- as.data.frame(matrix(c(h1,h2), ncol=2, nrow=22, byrow=FALSE))
+names(HTHC_dict) <- c("Original", "Simplified")
+
+
+##Create final storage matrix
+ColNames <- names(S23Data)
+
+years <- c(2022, 2023)
+nRows <- length(AllTrees)*length(years)*2 #in case you have multiple samples per year for QA/QC (should not need all this)
+
+TotalTreeMat <- as.data.frame(matrix(NA, nrow=nRows, ncol=length(ColNames)))
+names(TotalTreeMat) <- ColNames
+
+#find your start and ened indices
+endNum22 <- length(S22Data$Date)
+endNum23 <- endNum22 + length(S23Data$Date)
+
+TotalTreeMat[1:endNum22,] <- S22Data
+TotalTreeMat[(endNum22 + 1):endNum23,] <- S23Data
+TotalTreeMat <- TotalTreeMat[!is.na(TotalTreeMat$TreeName),] #get rid of extra rows
+TotalTreeMat$Year <- c(rep(2022, endNum22), rep(2023,length(S23Data$Date))) #add year
+
+write.csv(TotalTreeMat,"../01Data/Durham/091523AllYearsCombDurham.csv")
+
+
+```
