@@ -27,26 +27,12 @@ library(dplyr)
 ##Visuals
 library(ggplot2)
 
-#install.packages( "C://Users/renat/Documents/Grad School/Dissertation Research/TreeHealthDurChi/02Scripts/ordReg_1.0.tar.gz", repos=NULL, type="source" )
-#install.packages( "R:/clark/clark.unix/makeOrdReg/ordReg_1.0.tar.gz", repos=NULL, type="source" )
-#install.packages( "C://Users/Ren/Documents/Graduate School/01 Dissertation Research/01 Research Folders/TreeHealthDurChi/02Scripts/ordReg_1.0.tar.gz", repos=NULL, type="source" )
-#library('ordReg')
-
 
 ```
 
 ```{r read in tree lvl data}
 ##read in data
-basicDataPath <- c("../../01Data/02ChicagoSampling/")
-#TreeLvlCombined <- read.csv(paste(basicDataPath, "ProcessedData/TreeLevelDataCombined120722.csv", sep=""))
-
-#read in full version of the tree dataset
-##missing data
-#TreeLvlCombined <- read.csv(paste(basicDataPath, "ProcessedData/TreeLevelDataCombined050123.csv", sep=""))
-TreeLvlCombined <- read.csv("../../01Data/02ChicagoSampling/StreetTreeData_v2023/091223AllYearsComb.csv")
-
-TodayDate <- Sys.Date()
-date <- format(TodayDate, format="%b%d%y")
+TreeLvlCombined <- read.csv("../01Data/Chicago/ChicagoAllYearsComb.csv")
 ```
 
 
@@ -90,7 +76,7 @@ Need to get info for Quercus muhlenbergii and Magnolia liliiflora from the book,
 
 ```{r pull in tree-lvl data}
 #tree species information
-SppSpecificData <- read.csv(paste(basicDataPath,"ProcessedData/SpeciesInformation_Chicago_Dirr.csv", sep=""))
+SppSpecificData <- read.csv("../01Data/Chicago/SpeciesInformation_Chicago_Dirr.csv")
 
 #for ease later
 TreeLvlCombined$GenSpe <- paste(TreeLvlCombined$Genus, TreeLvlCombined$Species, sep="_")
@@ -361,175 +347,6 @@ TreeLvlCombined_mod$Powerline <- as.factor(TreeLvlCombined_mod$Powerline)
 
 
 
-```{r between pred corr}
-##Pull in relevant R packages
-library(psych)####Tetrachoric - binary
-#tetrachoric(data)
-
-library(polycor)##Polychoric - ordinal
-#polychor(x,y)
-
-library(rcompanion)##Cramer's V - nominal
-#cramerV(data)
-
-#Look at the variables
-preds <- c("TreeName", "Segment", "Year", "BasalArea", "SppGroup","Mulch", "PercentImperv",   "TreeSize", "Powerline", "UrbanApp", "SiteType", "Gardenscape","PrunedCorrect", "CrownLight")
-
-#For simplicity
-# TreeLvlCombined_mod$TreeSize <- as.character(TreeLvlCombined_mod$TreeSize)
-# TreeLvlCombined_mod$TreeSize[TreeLvlCombined_mod$TreeSize == "Small/Medium"] <- 0
-# TreeLvlCombined_mod$TreeSize[TreeLvlCombined_mod$TreeSize == "Large"] <- 1
-
-#binary
-binVars <- c("Powerline","UrbanApp","PrunedCorrect")
-oVars <- binVars #so you can do pairwise comparisons
-
-for(b in 1:length(binVars)){
-  #pick starting variable
-  b1 <- binVars[b]
-  oVars <- oVars[oVars != b1] #the other ones left
-  
-  #if none left
-  if(length(oVars) == 0){
-    print("Done with all pairwise comparisons!")
-    next
-  } 
-  
-  #for each remaining combination
-  for (c in 1:length(oVars)){
-    b2 <- oVars[c]
-    tb <- table(TreeLvlCombined_mod[,c(b1,b2)])
-    
-    tet <- tetrachoric(x=tb,)
-    
-    print(paste("The tetrachoric rho for", b1, "and", b2, "is:", tet$rho))
-  }
-  
-}
-
-#so maybe avoid tree size and urban rec together? see which one makes more sense?
-
-#ordinal
-ordVars <- c("PercentImperv","Gardenscape","CrownLight")
-oVars_o <- ordVars #so you can do pairwise comparisons
-
-for(o in 1:length(ordVars)){
-  #pick starting variable
-  o1 <- ordVars[o]
-  oVars_o <- oVars_o[oVars_o != o1] #the other ones left
-  
-  #if none left
-  if(length(oVars_o) == 0){
-    print("Done with all pairwise comparisons!")
-    next
-  } 
-  
-  #for each remaining combination
-  for (p in 1:length(oVars_o)){
-    o2 <- oVars_o[p]
-    
-    pol <- polychor(TreeLvlCombined_mod[,c(o1)],TreeLvlCombined_mod[,c(o2)])
-    print(paste("The polychoric correlation for", o1, "and", o2, "is:", pol))
-  }
-  
-}
-
-#none of these seem particularly strong, should be fine with the ordinal variables
-
-#nominal
-nomVars <- c("Segment", "SppGroup","Mulch","SiteType")
-oVars_n <- nomVars #so you can do pairwise comparisons
-
-for(n in 1:length(nomVars)){
-  #pick starting variable
-  n1 <- nomVars[n]
-  oVars_n <- oVars_n[oVars_n != n1] #the other ones left
-  
-  #if none left
-  if(length(oVars_n) == 0){
-    print("Done with all pairwise comparisons!")
-    next
-  } 
-  
-  #for each remaining combination
-  for (m in 1:length(oVars_n)){
-    n2 <- oVars_n[m]
-    tb_n <- table(TreeLvlCombined_mod[,c(n1,n2)])
-    
-    cramV <- cramerV(tb_n)
-    
-    print(paste("Cramer's V for", n1, "and", n2, "is:", cramV))
-  }
-  
-}
-
-#segment and site type are high (0.56), and segment and mulch is borderline (0.4) but a lot of the rest are somewhat lower
-
-#############################Visuals for the ones we want to interact
-###Tree size and powerline
-TS_pow <- table(TreeLvlCombined_mod[c("TreeSize", "Powerline")])
-PercTS_pow <- TS_pow/rowSums(TS_pow)
-print(PercTS_pow)
-
-###Urban App and Site Type
-UA_ST <- table(TreeLvlCombined_mod[c("UrbanApp", "SiteType")])
-PercUA_ST <- UA_ST/rowSums(UA_ST)
-print(PercUA_ST)
-
-##Urban App and Percent Imperv
-UA_PI <- table(TreeLvlCombined_mod[c("UrbanApp", "PercentImperv")])
-PercUA_PI <- UA_PI/rowSums(UA_PI)
-print(PercUA_PI)
-
-##Site Type and Perc Imperv
-ST_PI <- table(TreeLvlCombined_mod[c("SiteType", "PercentImperv")])
-PercST_PI <- ST_PI/rowSums(ST_PI)
-print(PercST_PI)
-
-####################SpeciesGroups
-OSppGroups <-TreeLvlCombined_mod[TreeLvlCombined_mod$SppGroup == "Other",]
-totTrees <- length(OSppGroups$X)
-
-##SppGroup x UrbanApp
-PercSG_UA <- table(OSppGroups$UrbanApp)/totTrees
-print(PercSG_UA)
-
-##SppGroup x TreeSize
-# PercSG_TS <- table(OSppGroups$TreeSize)/totTrees
-# print(PercSG_TS)
-
-
-###################Boxplots
-##Basal Area x Mulch (boxplot)
-ggplot(TreeLvlCombined_mod, aes(x = BasalArea, y = Mulch)) +
-  geom_violin() + stat_summary(fun.y=median, geom="point", size=2, color="red") 
-
-ggplot(TreeLvlCombined_mod, aes(y = BasalArea, x = Mulch, colour = Mulch)) +
-  geom_boxplot() +
-  geom_jitter()
-
-##Basal Area x Pruned Correct (boxplot)
-TreeLvlCombined_mod$PrunedCorrect <- as.character(TreeLvlCombined_mod$PrunedCorrect )
-#to be conservative here
-TreeLvlCombined_mod$PrunedCorrect[is.na(TreeLvlCombined_mod$PrunedCorrect )] <- 0
-TreeLvlCombined_mod$PrunedCorrect <- as.factor(TreeLvlCombined_mod$PrunedCorrect)
-
-ggplot(TreeLvlCombined_mod, aes(x = BasalArea, y = PrunedCorrect)) +
-  geom_violin() + stat_summary(fun.y=median, geom="point", size=2, color="red")
-
-ggplot(TreeLvlCombined_mod, aes(y = BasalArea, x = PrunedCorrect, colour = PrunedCorrect)) +
-  geom_boxplot() +
-  geom_jitter()
-
-```
-
-Takeaways from the above
-* Segment is related to a lot of things
-  - species group 0.273 which is not horrible
-  - mulch is 0.4281, which is not great
-  - site type is 0.7156.... not good
-* Might still be able to use tree size? 
-
 
 ##get model runs
 
@@ -552,7 +369,6 @@ fmcomplex = ~ Segment + Year + BasalArea*GenusGroup + Powerline + PercentImperv 
 
 #get x data
 xdataCom <- TreeLvlCombined_mod[,c("TreeName", "Segment", "Year", "BasalArea", "GenusGroup","CorrMulch", "PercentImperv",   "TreeSize", "Powerline", "SiteType", "Gardenscape","PrunedCorrect", "CrownLight", "UrbanApp", "LandUse")]
-#xdataCom <- TreeLvlCombined_mod[,c("TreeName", "Segment", "Year", "BasalArea", "SppGroup", "PercentImperv")]
 xdataCom$BasalArea <- scale(xdataCom$BasalArea)
 
 #run gjam model
@@ -580,19 +396,7 @@ out3var3 <- gjam(fmcomplex3, xdataCom, ydata, modelList = mlsimp)
 
 
 ```
-##Notes on VIF
 
-Had to remove percent impervious and crown light because of VIF
-
-Now we can go in and remove variables because of sensitivity
-
-From model 4, the ones to try removing first are
-* corrmulch
-* pruned correct
-* powerline
-
-then the next group
-* gardenscape
 
 ```{r 3Ds model refine}
 ###no crown light, no percent impervious
@@ -641,7 +445,6 @@ fmcomplex11 = ~ Segment + Year + BasalArea*GenusGroup + CorrMulch + Gardenscape 
 
 out3var11 <- gjam(fmcomplex11, xdataCom, ydata, modelList = mlsimp)
 
-###############################last attempt
 ##################################################################################
 ###no crown light, no percent impervious, no Corr mulch, no powerline, no pruned correct
 fmcomplex12 = ~ Segment + Year + BasalArea*GenusGroup + Gardenscape + UrbanApp*SiteType + LandUse
@@ -656,12 +459,6 @@ fmcomplex13 = ~ Segment + Year + BasalArea*GenusGroup + UrbanApp*SiteType + Land
 
 out3var13 <- gjam(fmcomplex13, xdataCom, ydata, modelList = mlsimp)
 
-
-# write.csv(out3var12$parameters$betaTable, "../../05Outputs/ModelRuns041924/Chicago_3Ds_bestModel_12_Betas.csv")
-# saveRDS(out3var12, "../../05Outputs/ModelRuns041924/Chicago_3Ds_bestModel_12.rds")
-
-# ppars <- list(SAVEPLOTS=T)
-# gjamPlot(out3var12, plotPars=ppars)
 
 ```
 
@@ -960,62 +757,3 @@ for(n in 1:length(nomVars)){
 
 ```
 
-
-##Just Honeylocust
-
-looking at patterns of stress just for one species
-
-
-```{r GLTR analyses}
-
-GLTRData <- TreeLvlCombined_mod[TreeLvlCombined_mod$Genus == "Gleditsia",]
-
-
-###Set up for gjam run
-TypeNames <- c("OC", "OC", "OC")
-
-#get ydata
-ydata <- GLTRData[,c("Defoliation", "Discoloration", "Dieback")]
-
-#get the model list
-mlsimp <- list(ng = 20000, burnin = 5000, typeNames = TypeNames, random="TreeName")
-
-#function
-fmcomplex = ~ Year + BasalArea + Powerline + CorrMulch + Gardenscape + PrunedCorrect + CrownLight + SiteType + LandUse
-
-#get x data
-xdataCom <- GLTRData[,c("TreeName", "Segment", "Year", "BasalArea", "GenusGroup","CorrMulch", "PercentImperv",   "TreeSize", "Powerline", "SiteType", "Gardenscape","PrunedCorrect", "CrownLight", "UrbanApp", "LandUse")]
-#xdataCom <- TreeLvlCombined_mod[,c("TreeName", "Segment", "Year", "BasalArea", "SppGroup", "PercentImperv")]
-xdataCom$BasalArea <- scale(xdataCom$BasalArea)
-
-#run gjam model
-
-out3var <- gjam(fmcomplex, xdataCom, ydata, modelList = mlsimp)
-
-#####get rid of crown light
-fmcomplex2 = ~ Year + BasalArea + Powerline + CorrMulch + Gardenscape + PrunedCorrect + SiteType + LandUse
-
-out3var2 <- gjam(fmcomplex2, xdataCom, ydata, modelList = mlsimp)
-
-##VIF still too high for site type
-fmcomplex3 = ~ Year + BasalArea + Powerline + CorrMulch + Gardenscape + PrunedCorrect + LandUse
-
-out3var3 <- gjam(fmcomplex3, xdataCom, ydata, modelList = mlsimp)
-
-
-#try without mulch
-fmcomplex4 = ~ Year + BasalArea + Powerline + Gardenscape + PrunedCorrect + LandUse
-
-out3var4 <- gjam(fmcomplex4, xdataCom, ydata, modelList = mlsimp)
-
-# try without pruning
-fmcomplex5 = ~ Year + BasalArea + Powerline + CorrMulch + Gardenscape+ LandUse
-
-out3var5 <- gjam(fmcomplex5, xdataCom, ydata, modelList = mlsimp)
-
-#try without mulch or pruning
-fmcomplex6 = ~ Year + BasalArea + Powerline + Gardenscape + LandUse
-
-out3var6 <- gjam(fmcomplex6, xdataCom, ydata, modelList = mlsimp)
-
-```
