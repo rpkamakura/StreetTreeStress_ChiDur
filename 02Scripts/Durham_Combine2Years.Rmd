@@ -15,14 +15,14 @@ knitr::opts_chunk$set(echo = TRUE)
 basicFilepath <- "../01Data/Durham/Raw/"
 
 ##2023 data
-S23Campus <- read.csv(paste(basicFilepath, "DukeCampusSheetS23_edit.csv", sep="")) #use the one with inaccessible/missing trees removed
-S23Street <- read.csv(paste(basicFilepath, "DurhamStreetMainSheetS23_all.csv", sep=""))
-S23Park <- read.csv(paste(basicFilepath, "ParkTreesSheetS23.csv", sep=""))
+S23Campus <- read.csv(paste(basicFilepath, "Duke2023_TreeHealthData_GrowingCond.csv", sep="")) #use the one with inaccessible/missing trees removed
+S23Street <- read.csv(paste(basicFilepath, "Durham2023_TreeHealthData_GrowingCond", sep=""))
+S23Park <- read.csv(paste(basicFilepath, "Park2023_TreeHealthData_GrowingCond.csv", sep=""))
 
 
 ##2022 data
-S22MainSheet <- read.csv(paste(basicFilepath, "090723DurhamStreetMainSheetS22.csv", sep=""))
-S22HTHC <- read.csv(paste(basicFilepath, "090723DurhamHTHCRS2.csv", sep=""))
+S22MainSheet <- read.csv(paste(basicFilepath, "Durham2022_GrowingCond.csv", sep=""))
+S22HTHC <- read.csv(paste(basicFilepath, "Durham2022_TreeHealthData.csv", sep=""))
 
 ```
 
@@ -171,45 +171,6 @@ S22Data <- S22Data[!is.na(S22Data$TreeName), ]
 
 ```
 
-Have more trees than it seems like we should without 2023 data, worth checking
-* S-O21-PRPE-023 should be there
-* S-O21-ACCA-038 should be there (was removed)
-* S-O21-PRPE-024 should be there
-* S-O21-QUUN-034 should be there
-* S-Q21-GYDI-055 should be there (not in the combined list)
-* S-R21-CRVI-049 should be there
-* S-R21-ULAM-020 should be there
-
-To exclude:
-* a bunch of trees from O18, every tree with a tree number > 19
-* S-P21-ZESE-030 (not in the city inventory but seems like a street tree..., get locations from HTHC?)
-* S-Q21-CACA-013
-* S-Q21-CACA-014
-* S-Q21-CACA-015
-* S-Q21-CACA-016
-* S-R21-CACA-009
-
-To check (maybe worth doing some fieldwork? at least for percent imperv)
-* S-O21-QUPH-018 (not on map)
-* S-P21-PRUN-057 seemingly (not on map...)
-* S-P21-ZESE-033 (not on map...)
-* S-P21-ZESE-034 (not on map)
-* S-R21-CRVI-011 (not on map)
-* S-S22-ZESE-014 (not on map and the numbering here is really odd)
-* S-S22-ZESE-015 (not on map and the numbering here is really odd)
-* S-U16-LAUN-001 (not on map)
-* S-U16-QUUN-002 (not on map)
-* S-U16-PITA-003 (not on map)
-* S-U21-LIST-003 (not on map)
-* marked these on the map here - https://www.google.com/maps/d/edit?mid=1WExk3A4u77dFKMYlnTjlG9e2Z7wqWM8&ll=36.017090616540244%2C-78.90570811222469&z=12 
-
-re-ran, things to check
-* S-O21-ACSA-058 (removed)
-* S-O21-LAUN-047 (removed)
-
-
-
-
 
 ##Now normalize them all and pull them together
 
@@ -251,7 +212,7 @@ TotalTreeMat[(endNum22 + 1):endNum23,] <- S23Data
 TotalTreeMat <- TotalTreeMat[!is.na(TotalTreeMat$TreeName),] #get rid of extra rows
 TotalTreeMat$Year <- c(rep(2022, endNum22), rep(2023,length(S23Data$Date))) #add year
 
-write.csv(TotalTreeMat,"../01Data/Durham/091523AllYearsCombDurham.csv")
+write.csv(TotalTreeMat,"../01Data/Durham/DurhamAllYearsComb.csv")
 
 
 ```

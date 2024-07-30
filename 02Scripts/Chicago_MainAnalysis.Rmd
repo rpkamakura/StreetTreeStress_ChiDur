@@ -8,12 +8,6 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-
-#library(stevemisc) #for simulating censured continuous data
-#source( '../orFunctions_jsc.R' )
-#Rcpp::sourceCpp( '../cppFns.cpp' )
-
-#for Jim's code
 library(gjam)
 
 #visualize JAGS output
@@ -27,6 +21,8 @@ library(dplyr)
 ##Visuals
 library(ggplot2)
 
+#install.packages( "./ordReg_1.0.tar.gz", repos=NULL, type="source" )
+library('ordReg')
 
 ```
 
