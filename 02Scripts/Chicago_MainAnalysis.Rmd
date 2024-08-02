@@ -1,6 +1,6 @@
 ---
-title: "Chicago Modeling: Probit - R data"
-author: "Renata"
+title: "Chicago Main Analyses"
+author: "Renata Poulton Kamakura"
 date: "2022-12-08"
 output: html_document
 ---
@@ -9,11 +9,6 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 
 library(gjam)
-
-#visualize JAGS output
-library(MCMCvis)
-library(RcppArmadillo)
-library(stringr)
 
 ##Group means for segment data
 library(dplyr)
@@ -66,9 +61,6 @@ basalArea <- function(dbh){
 
 ##Multiple Tree Health Variables
 
-Need to add some variables that are otherwise not in here (namely species-level variables)
-
-Need to get info for Quercus muhlenbergii and Magnolia liliiflora from the book, which is at home...
 
 ```{r pull in tree-lvl data}
 #tree species information
@@ -130,35 +122,8 @@ for (t in 1:length(TreeLvlCombined$X)){
 
 ```
 
-Had to go back and check trees that should be excluded and double-check why
 
 ## More groupings
-
-Here we are going to mess around a bit with trying to do some more aggregation, because the data are still really noisy
-
-Fine Twig Dieback
-1: trace
-2: 2-5%
-3: 6-10%
-4: 10-25% (was 4-6)
-5: 25-50% (was 7 -11)
-6: 50-75% (was 12-20)
-
-Species groupings (had 15 groups)
-* Acer platanoides (65)
-* Gleditsia triacanthos (127)
-* Fraxinus (combined)
-* Tilia spp
-* Ulmus spp 
-* Maple spp (may need to be split out though)
-- saccharinum/rubrum/x freemanii (sect. Rubra)
-- saccharum (Sect. Saccharodendron, in same next lvl group with rubrum, more closely related to griseum - pentaphylla)
-- palmatum (2 - sect. palmata) by itself
-
-* rest done by functional group, probably
-
-Maple phylogeny source: https://onlinelibrary.wiley.com/doi/pdf/10.1111/jse.12535
-
 
 ```{r prep response data}
 TreeLvlCombined_mod <- TreeLvlCombined
@@ -640,116 +605,3 @@ for (t in 1:length(uniTrees)){
 }
 
 ```
-
-###Correlations between variables
-```{r between pred corr}
-##Pull in relevant R packages
-library(psych)####Tetrachoric - binary
-#tetrachoric(data)
-
-library(polycor)##Polychoric - ordinal
-#polychor(x,y)
-
-library(rcompanion)##Cramer's V - nominal
-#cramerV(data)
-
-#Look at the variables
-preds <- c("TreeName", "Segment", "Year", "BasalArea", "SppGroup","Mulch", "PercImperv",   "TreeSize", "Powerline", "UrbanApp", "SiteType", "Gardenscape","PrunedCorrect", "CrownLight")
-
-#For simplicity
-# summaryDat$TreeSize <- as.character(summaryDat$TreeSize)
-# summaryDat$TreeSize[summaryDat$TreeSize == "Small/Medium"] <- 0
-# summaryDat$TreeSize[summaryDat$TreeSize == "Large"] <- 1
-
-summaryDat$CorrMulch <- summaryDat$Mulch
-summaryDat$CorrMulch[summaryDat$MulchVolcano == 1] <- 0
-
-#binary
-binVars <- c("Powerline", "CorrPrune", "CorrMulch")
-oVars <- binVars #so you can do pairwise comparisons
-
-for(b in 1:length(binVars)){
-  #pick starting variable
-  b1 <- binVars[b]
-  oVars <- oVars[oVars != b1] #the other ones left
-  
-  #if none left
-  if(length(oVars) == 0){
-    print("Done with all pairwise comparisons!")
-    next
-  } 
-  
-  #for each remaining combination
-  for (c in 1:length(oVars)){
-    b2 <- oVars[c]
-    tb <- table(summaryDat[,c(b1,b2)])
-    
-    tet <- tetrachoric(x=tb,)
-    
-    print(paste("The tetrachoric rho for", b1, "and", b2, "is:", tet$rho))
-  }
-  
-}
-
-#so maybe avoid tree size and urban rec together? see which one makes more sense?
-
-#ordinal
-ordVars <- c("PercImperv","Gardenscape","CrownLight")
-oVars_o <- ordVars #so you can do pairwise comparisons
-
-for(o in 1:length(ordVars)){
-  #pick starting variable
-  o1 <- ordVars[o]
-  oVars_o <- oVars_o[oVars_o != o1] #the other ones left
-  
-  #if none left
-  if(length(oVars_o) == 0){
-    print("Done with all pairwise comparisons!")
-    next
-  } 
-  
-  #for each remaining combination
-  for (p in 1:length(oVars_o)){
-    o2 <- oVars_o[p]
-    
-    pol <- polychor(summaryDat[,c(o1)],summaryDat[,c(o2)])
-    print(paste("The polychoric correlation for", o1, "and", o2, "is:", pol))
-  }
-  
-}
-
-#none of these seem particularly strong, should be fine with the ordinal variables
-
-#nominal
-nomVars <- c("Segment", "SppGroup","Mulch","SiteType", "LandUse")
-oVars_n <- nomVars #so you can do pairwise comparisons
-
-for(n in 1:length(nomVars)){
-  #pick starting variable
-  n1 <- nomVars[n]
-  oVars_n <- oVars_n[oVars_n != n1] #the other ones left
-  
-  #if none left
-  if(length(oVars_n) == 0){
-    print("Done with all pairwise comparisons!")
-    next
-  } 
-  
-  #for each remaining combination
-  for (m in 1:length(oVars_n)){
-    n2 <- oVars_n[m]
-    tb_n <- table(summaryDat[,c(n1,n2)])
-    
-    cramV <- cramerV(tb_n)
-    
-    print(paste("Cramer's V for", n1, "and", n2, "is:", cramV))
-  }
-  
-}
-
-#segment and site type are high (0.56), and segment and mulch is borderline (0.4) but a lot of the rest are somewhat lower
-
-
-
-```
-

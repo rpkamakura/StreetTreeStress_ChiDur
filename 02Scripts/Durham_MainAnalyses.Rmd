@@ -1,6 +1,6 @@
 ---
-title: "Durham Modeling: Probit - R data"
-author: "Renata"
+title: "Durham Main Analyses"
+author: "Renata Poulton Kamakura"
 date: "2022-12-08"
 output: html_document
 ---
@@ -10,11 +10,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(gjam)
 
-#visualize JAGS output
-library(MCMCvis)
-library(RcppArmadillo)
-library(stringr)
-
 ##Group means for segment data
 library(dplyr)
 
@@ -23,7 +18,6 @@ library(ggplot2)
 
 #install.packages( "./ordReg_1.0.tar.gz", repos=NULL, type="source" )
 library('ordReg')
-library(car) #attempt at VIF
 
 
 ```
@@ -61,9 +55,6 @@ basalArea <- function(dbh){
 
 ##Multiple Tree Health Variables
 
-Need to add some variables that are otherwise not in here (namely species-level variables)
-
-Need to get info for Quercus muhlenbergii and Magnolia liliiflora from the book, which is at home...
 
 ```{r pull in species-lvl data}
 #tree species information
@@ -327,7 +318,7 @@ TreeLvlCombined_mod$Powerline <- as.factor(TreeLvlCombined_mod$Powerline)
 
 
 
-##Try it with just street trees
+##Run models
 
 
 ```{r model run 2}
@@ -433,7 +424,9 @@ fmcomplex12 = ~ SegmentMod + Year + BasalArea*GenusGroup + Powerline + CorrMulch
 out3varST12 <- gjam(fmcomplex12, xdataCom, ydata, modelList = mlsimp)
 
 ```
-Okay, so after that whole mess, the best option (lowest DIC) that gets your VIF values down for everything except segment is the model without crown light, percent impervious, and correct mulch
+
+
+Adjust based on sensitivity values
 
 
 ```{r remove from sensitivity}
@@ -633,108 +626,4 @@ for (t in 1:length(uniTrees)){
 
 ```
 
-###Correlations between variables
-```{r between pred corr}
-##Pull in relevant R packages
-library(psych)####Tetrachoric - binary
-#tetrachoric(data)
-
-library(polycor)##Polychoric - ordinal
-#polychor(x,y)
-
-library(rcompanion)##Cramer's V - nominal
-#cramerV(data)
-
-#Look at the variables
-preds <- c("TreeName", "Segment", "Year", "BasalArea", "SppGroup","Mulch", "PercImperv",   "TreeSize", "Powerline", "UrbanApp", "SiteType", "Gardenscape","PrunedCorrect", "CrownLight")
-
-
-#binary
-binVars <- c("Powerline", "CorrPrune")
-oVars <- binVars #so you can do pairwise comparisons
-
-for(b in 1:length(binVars)){
-  #pick starting variable
-  b1 <- binVars[b]
-  oVars <- oVars[oVars != b1] #the other ones left
-  
-  #if none left
-  if(length(oVars) == 0){
-    print("Done with all pairwise comparisons!")
-    next
-  } 
-  
-  #for each remaining combination
-  for (c in 1:length(oVars)){
-    b2 <- oVars[c]
-    tb <- table(summaryDat[,c(b1,b2)])
-    
-    tet <- tetrachoric(x=tb,)
-    
-    print(paste("The tetrachoric rho for", b1, "and", b2, "is:", tet$rho))
-  }
-  
-}
-
-#so maybe avoid tree size and urban rec together? see which one makes more sense?
-
-#ordinal
-ordVars <- c("PercImperv","Gardenscape","CrownLight")
-oVars_o <- ordVars #so you can do pairwise comparisons
-
-for(o in 1:length(ordVars)){
-  #pick starting variable
-  o1 <- ordVars[o]
-  oVars_o <- oVars_o[oVars_o != o1] #the other ones left
-  
-  #if none left
-  if(length(oVars_o) == 0){
-    print("Done with all pairwise comparisons!")
-    next
-  } 
-  
-  #for each remaining combination
-  for (p in 1:length(oVars_o)){
-    o2 <- oVars_o[p]
-    
-    pol <- polychor(summaryDat[,c(o1)],summaryDat[,c(o2)])
-    print(paste("The polychoric correlation for", o1, "and", o2, "is:", pol))
-  }
-  
-}
-
-#none of these seem particularly strong, should be fine with the ordinal variables
-
-#nominal
-nomVars <- c("Segment", "SppGroup","Mulch","SiteType", "LandUse")
-oVars_n <- nomVars #so you can do pairwise comparisons
-
-for(n in 1:length(nomVars)){
-  #pick starting variable
-  n1 <- nomVars[n]
-  oVars_n <- oVars_n[oVars_n != n1] #the other ones left
-  
-  #if none left
-  if(length(oVars_n) == 0){
-    print("Done with all pairwise comparisons!")
-    next
-  } 
-  
-  #for each remaining combination
-  for (m in 1:length(oVars_n)){
-    n2 <- oVars_n[m]
-    tb_n <- table(summaryDat[,c(n1,n2)])
-    
-    cramV <- cramerV(tb_n)
-    
-    print(paste("Cramer's V for", n1, "and", n2, "is:", cramV))
-  }
-  
-}
-
-#segment and site type are high (0.56), and segment and mulch is borderline (0.4) but a lot of the rest are somewhat lower
-
-
-
-```
 

@@ -1,5 +1,5 @@
 ---
-title: "Combine Data 3 Years"
+title: "Combine Data 2 Years"
 output: html_document
 date: "2023-07-28"
 ---
@@ -8,7 +8,7 @@ date: "2023-07-28"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-##Need to average within years
+##Read in data
 
 ```{r load data}
 
