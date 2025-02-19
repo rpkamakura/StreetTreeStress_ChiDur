@@ -1,4 +1,4 @@
-#Street Tree Stress in Two U.S. Cities 
+# Street Tree Stress in Two U.S. Cities 
 
 This is the code and data accompanying the paper: Street Tree Stress Levels Vary with Tree Species, Urban Tolerance, and Urban Conditions in Two U.S. Cities
 
