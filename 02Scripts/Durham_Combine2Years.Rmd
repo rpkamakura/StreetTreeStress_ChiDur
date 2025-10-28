@@ -16,7 +16,7 @@ basicFilepath <- "../01Data/Durham/Raw/"
 
 ##2023 data
 S23Campus <- read.csv(paste(basicFilepath, "Duke2023_TreeHealthData_GrowingCond.csv", sep="")) #use the one with inaccessible/missing trees removed
-S23Street <- read.csv(paste(basicFilepath, "Durham2023_TreeHealthData_GrowingCond", sep=""))
+S23Street <- read.csv(paste(basicFilepath, "Durham2023_TreeHealthData_GrowingCond.csv", sep=""))
 S23Park <- read.csv(paste(basicFilepath, "Park2023_TreeHealthData_GrowingCond.csv", sep=""))
 
 
