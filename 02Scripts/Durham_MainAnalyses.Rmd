@@ -94,15 +94,17 @@ for (t in 1:length(TreeLvlCombined$X)){
   
   #what do you do if you don't have info on this species
   if(length(SppInfoInd) == 0){
-    print(paste("Error, no species information for", TreeLvlCombined$GenSpe[t], "Tree #", t))
+    message("Error, no species information for", TreeLvlCombined$GenSpe[t], "Tree #", t)
     
     ##try to fill it in with the default for the genus
     Spp2 <- SppSpecificData$Species =="spp."
     SppInfoInd2 <- c(1:length(SppSpecificData[,1]))[(YesGen & Spp2)]
     
     if(length(SppInfoInd2) == 0){
-      print(paste("Error, no generic genus-level information for", TreeLvlCombined$Genus[t], "Tree #", t))
+      message("Error, no generic genus-level information for", TreeLvlCombined$Genus[t], "Tree #", t)
+      
       next #go to the next tree
+      
     } else {
       TreeLvlCombined$TreeSize[t] <-  mean(c(SppSpecificData$Height_height[SppInfoInd2], SppSpecificData$Height_low[SppInfoInd2]))
     TreeLvlCombined$DroughtTol[t] <- SppSpecificData$DroughtTol[SppInfoInd2]

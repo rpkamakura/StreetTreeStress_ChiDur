@@ -73,8 +73,6 @@ TreeLvlCombined$GenSpe <- paste(TreeLvlCombined$Genus, TreeLvlCombined$Species, 
 TreeLvlCombined$Species[TreeLvlCombined$Species == "unknown"] <- "spp."
 
 TreeLvlCombined$TreeSize <- rep(NA, length(TreeLvlCombined$TreeName))
-TreeLvlCombined$DroughtTol <- rep(NA, length(TreeLvlCombined$TreeName))
-TreeLvlCombined$SaltTol <- rep(NA, length(TreeLvlCombined$TreeName))
 TreeLvlCombined$UrbanApp <- rep(NA, length(TreeLvlCombined$TreeName))
 
 names(TreeLvlCombined)[names(TreeLvlCombined) == "CrownVigor"] <- "CrownStress"
@@ -105,16 +103,12 @@ for (t in 1:length(TreeLvlCombined$X)){
       next #go to the next tree
     } else {
       TreeLvlCombined$TreeSize[t] <-  mean(c(SppSpecificData$Height_height[SppInfoInd2], SppSpecificData$Height_low[SppInfoInd2]))
-      TreeLvlCombined$DroughtTol[t] <- SppSpecificData$DroughtTol[SppInfoInd2]
-      TreeLvlCombined$SaltTol[t] <- SppSpecificData$SaltTol[SppInfoInd2]
       TreeLvlCombined$UrbanApp[t] <- SppSpecificData$StreetUrban[SppInfoInd2]
     }
   
   #have a species-level match
   } else {
     TreeLvlCombined$TreeSize[t] <-  mean(c(SppSpecificData$Height_height[SppInfoInd], SppSpecificData$Height_low[SppInfoInd]))
-    TreeLvlCombined$DroughtTol[t] <- SppSpecificData$DroughtTol[SppInfoInd]
-    TreeLvlCombined$SaltTol[t] <- SppSpecificData$SaltTol[SppInfoInd]
     TreeLvlCombined$UrbanApp[t] <- SppSpecificData$StreetUrban[SppInfoInd]
   } #seeing if there is a match
   
