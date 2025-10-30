@@ -61,6 +61,8 @@ basalArea <- function(dbh){
 
 ##Multiple Tree Health Variables
 
+Follow-up on:
+Error, no generic genus-level information for Liriodendron Tree # 1020
 
 ```{r pull in tree-lvl data}
 #tree species information
@@ -114,125 +116,94 @@ for (t in 1:length(TreeLvlCombined$X)){
   
 }
 
+#Prep for analyses
+TreeLvlCombined$UrbanApp <- as.factor(TreeLvlCombined$UrbanApp)
+
 ```
 
 
-## More groupings
+## Grouping for sample sizes
+
+Goal here is to do some simplification because we don't have the sample size to characterize all the possible predictor levels or even all of the response levels
 
 ```{r prep response data}
+#in case there are errors, easy to go back
 TreeLvlCombined_mod <- TreeLvlCombined
 
 #Get rid of trees without local site conditions
 TreeLvlCombined_mod <- TreeLvlCombined_mod[!is.na(TreeLvlCombined_mod$Gardenscape),]
 
-#group the tree size variable
-# thresh <- 60
-# TreeLvlCombined_mod$TreeSize[TreeLvlCombined_mod$TreeSize <= thresh] <- "Small/Medium"
-# TreeLvlCombined_mod$TreeSize[TreeLvlCombined_mod$TreeSize != "Small/Medium"] <- "Large"
+#defoliation
+TreeLvlCombined_mod$Defoliation[TreeLvlCombined_mod$Defoliation > 3] <- 3
+TreeLvlCombined_mod$Defoliation <- round(TreeLvlCombined_mod$Defoliation) #Get rid of 0.5
 
-##managing the data
-TreeLvlCombined_mod$BasalArea <- sapply(TreeLvlCombined_mod$TotalDBH, basalArea)
-TreeLvlCombined_mod$TreeSize  <- as.factor( TreeLvlCombined_mod$TreeSize )
-#TreeLvlCombined_mod$SppGroup  <- as.factor( TreeLvlCombined_mod$SppGroup )
-TreeLvlCombined_mod$Segment <- as.factor(TreeLvlCombined_mod$Segment)
+#discoloration
+TreeLvlCombined_mod$Discoloration[TreeLvlCombined_mod$Discoloration > 4] <- 4
+TreeLvlCombined_mod$Discoloration <- round(TreeLvlCombined_mod$Discoloration) #Get rid of 0.5
 
-
-#collapsing the categories here for ease
+#dieback
 TreeLvlCombined_mod$Dieback[((TreeLvlCombined_mod$Dieback > 3) & (TreeLvlCombined_mod$Dieback <= 6))] <- 4 #11-25%
 TreeLvlCombined_mod$Dieback[(TreeLvlCombined_mod$Dieback > 6)] <- 5 #25%+
 TreeLvlCombined_mod$Dieback[TreeLvlCombined_mod$CrownStress >= 5] <- 5 #trees are dead
+TreeLvlCombined_mod$Dieback <- round(TreeLvlCombined_mod$Dieback) #Get rid of 0.5
 
-##because there are not enough categories
-TreeLvlCombined_mod$Defoliation[TreeLvlCombined_mod$Defoliation > 3] <- 3
-TreeLvlCombined_mod$Discoloration[TreeLvlCombined_mod$Discoloration > 4] <- 4
+#crown stress
+TreeLvlCombined_mod$CrownStress <- round(TreeLvlCombined_mod$CrownStress, digits=0)
+```
 
-#Get rid of 0.5
-TreeLvlCombined_mod$Discoloration <- round(TreeLvlCombined_mod$Discoloration)
-TreeLvlCombined_mod$Defoliation <- round(TreeLvlCombined_mod$Defoliation)
-TreeLvlCombined_mod$Dieback <- round(TreeLvlCombined_mod$Dieback)
+```{r prep baseline and tree characteristics}
 
+#####baseline/sampling variables
+#prep segment
+TreeLvlCombined_mod$Segment <- as.character(TreeLvlCombined_mod$Segment)
+TreeLvlCombined_mod<- TreeLvlCombined_mod[TreeLvlCombined_mod$Segment != "UIC",] #not include
+TreeLvlCombined_mod$Segment[TreeLvlCombined_mod$Segment == "324"] <- "01_324" #set as baseline
+TreeLvlCombined_mod$Segment <- as.factor(TreeLvlCombined_mod$Segment)
 
-##Species group adjustment
-TreeLvlCombined_mod$GenSpe[TreeLvlCombined_mod$GenSpe == "Fraxinus_pennsylvanica" | TreeLvlCombined_mod$GenSpe == "Fraxinus_unknown"] <- "Fraxinus spp."
-TreeLvlCombined_mod$GenSpe[(TreeLvlCombined_mod$GenSpe == "Tilia_cordata") | (TreeLvlCombined_mod$GenSpe == "Tilia_americana")] <- "Tilia spp." #small sample size and some cultivars
-TreeLvlCombined_mod$GenSpe[TreeLvlCombined_mod$GenSpe == "Ulmus_americana"] <- "Ulmus spp." #unsure IDs
-TreeLvlCombined_mod$GenSpe[TreeLvlCombined_mod$GenSpe == "Ulmus_pumila"| TreeLvlCombined_mod$GenSpe == "Ulmus_unknown" | TreeLvlCombined_mod$GenSpe == "Ulmus_spp."] <- "Ulmus spp." #unsure IDs
-SppFreq <- sort(table(TreeLvlCombined_mod$GenSpe),decreasing = TRUE)
-CommonSpp <- SppFreq[SppFreq > 50]
+#Year
+TreeLvlCombined_mod$Year <- as.factor(TreeLvlCombined_mod$Year)
 
-#Create a species group category
-TreeLvlCombined_mod$SppGroup <- rep("Other", length(TreeLvlCombined_mod$TreeName))
-TreeLvlCombined_mod$SppGroup[TreeLvlCombined_mod$GenSpe %in% names(CommonSpp)] <- TreeLvlCombined_mod$GenSpe[TreeLvlCombined_mod$GenSpe %in% names(CommonSpp)]
-TreeLvlCombined_mod$SppGroup[TreeLvlCombined_mod$SppGroup =="Other"] <- "01_Other"
-TreeLvlCombined_mod$SppGroup <- as.factor(TreeLvlCombined_mod$SppGroup) #for model
-#TreeLvlCombined_mod$SppGroup <- relevel(TreeLvlCombined_mod$SppGroup, ref = "Other")
+############Tree characteristics
+##prep basal area
+TreeLvlCombined_mod$BasalArea <- sapply(TreeLvlCombined_mod$TotalDBH, basalArea)
 
-#so the model recognizes it properly
+#group the tree size variable
+thresh1 <- 35 #should check if this is a reasonable grouping
+thresh2 <- 60
+ts_initial <- TreeLvlCombined_mod$TreeSize
+TreeLvlCombined_mod$TreeSize[ts_initial <= thresh1] <- "Small"
+TreeLvlCombined_mod$TreeSize[ts_initial > thresh1 & ts_initial <= thresh2] <- "Medium"
+TreeLvlCombined_mod$TreeSize[ts_initial > thresh2] <- "Large"
+TreeLvlCombined_mod$TreeSize  <- as.factor( TreeLvlCombined_mod$TreeSize )
+
+#urban appropriate
 TreeLvlCombined_mod$UrbanApp <- as.factor(TreeLvlCombined_mod$UrbanApp)
+```
 
-############Coarse variables
-
-##create Mulch categories
-TreeLvlCombined_mod$Mulch[TreeLvlCombined_mod$Mulch == 1] <- "Mulch"
-TreeLvlCombined_mod$Mulch[TreeLvlCombined_mod$Mulch == 0] <- "None"
-TreeLvlCombined_mod$Mulch[TreeLvlCombined_mod$MulchVolcano == 1] <- "Volcano"
-
-TreeLvlCombined_mod$Mulch <- as.factor(TreeLvlCombined_mod$Mulch)
-TreeLvlCombined_mod$Mulch <- relevel(TreeLvlCombined_mod$Mulch, ref = "None")
-
-
-##Group Land Use categories
-TreeLvlCombined_mod$LandUse <- as.character(TreeLvlCombined_mod$LandUse)
-TreeLvlCombined_mod$LandUse[TreeLvlCombined_mod$LandUse == "SFR-A" | TreeLvlCombined_mod$LandUse == "SFR-D"] <- "SFR"
+```{r prep site characteristics}
+################ Site characteristics
+#######Land use
+TreeLvlCombined_mod$LandUse <- as.character(TreeLvlCombined_mod$LandUse) #easier to modify
+##leaving the same:multi-family residential (MFR), institutional (INST), managed park (MP)
+###residential - set as baseline
+TreeLvlCombined_mod$LandUse[TreeLvlCombined_mod$LandUse == "SFR-A" | TreeLvlCombined_mod$LandUse == "SFR-D"] <- "AA_SFR" #collapse into single-family res
+##Commercial + Mixed
 TreeLvlCombined_mod$LandUse[TreeLvlCombined_mod$LandUse == "COMM" | TreeLvlCombined_mod$LandUse == "MIX"] <- "COMM_Mx"
-TreeLvlCombined_mod$LandUse[TreeLvlCombined_mod$LandUse == "V" | TreeLvlCombined_mod$LandUse == "UT" | TreeLvlCombined_mod$LandUse == "IND" | TreeLvlCombined_mod$LandUse == "UT" | TreeLvlCombined_mod$LandUse == "TR" | TreeLvlCombined_mod$LandUse == "AG" | TreeLvlCombined_mod$LandUse == "INST"| TreeLvlCombined_mod$LandUse == "MP"] <- "Other"
+#Other (industrial + vacant)
+TreeLvlCombined_mod$LandUse[TreeLvlCombined_mod$LandUse == "V" | TreeLvlCombined_mod$LandUse == "UT" | TreeLvlCombined_mod$LandUse == "IND" | TreeLvlCombined_mod$LandUse == "TR" | TreeLvlCombined_mod$LandUse == "AG" ] <- "Other"
+#turn back into factor
 TreeLvlCombined_mod$LandUse <- as.factor(TreeLvlCombined_mod$LandUse)
 
-##Need to modify the Percent Imperv because some of the categories are very low
+
+#####Percent Impervious
 TreeLvlCombined_mod$PercentImperv[TreeLvlCombined_mod$PercentImperv <=2] <- 1 #less than 26% imperv
 TreeLvlCombined_mod$PercentImperv[TreeLvlCombined_mod$PercentImperv ==3] <- 2 #26-50
 TreeLvlCombined_mod$PercentImperv[TreeLvlCombined_mod$PercentImperv ==4] <- 3 #51-75
 TreeLvlCombined_mod$PercentImperv[TreeLvlCombined_mod$PercentImperv ==5] <- 4 #76-100
 
+TreeLvlCombined_mod$PercentImperv <- as.factor(TreeLvlCombined_mod$PercentImperv)
 
-#Translate Gardenscape
-TreeLvlCombined_mod$Gardenscape[TreeLvlCombined_mod$Gardenscape==""] <- "None"
-h1 <- c("None", "Minimal", "Moderate", "Extensive")
-h2 <- c(1:4)
-GDict <- as.data.frame(matrix(c(h1,h2), nrow=4, ncol=2, byrow=FALSE))
-names(GDict) <- c("Original", "Simplified")
-
-TreeLvlCombined_mod$Gardenscape <- GDict$Simplified[match(TreeLvlCombined_mod$Gardenscape, GDict$Original)]
-
-#Translate Grass
-TreeLvlCombined_mod$GrassDescription[TreeLvlCombined_mod$GrassDescription==""| TreeLvlCombined_mod$GrassDescription=="Turf"] <- "None"
-h1 <- c("Dry/brown", "None", "Patchy but green", "Lush")
-h2 <- c(0,1,2,3)
-GrDict<- as.data.frame(matrix(c(h1,h2), nrow=4, ncol=2, byrow=FALSE))
-names(GrDict) <- c("Original", "Simplified")
-TreeLvlCombined_mod$GrassDescription <- GDict$Simplified[match(TreeLvlCombined_mod$GrassDescription, GDict$Original)]
-
-#Pruning
-TreeLvlCombined_mod$PrunedCorrect <-TreeLvlCombined_mod$Pruned
-TreeLvlCombined_mod$PrunedCorrect[TreeLvlCombined_mod$HatrackPrune == 1 | TreeLvlCombined_mod$FlushCutPrune == 1] <- 0
-
-##CrownStress
-TreeLvlCombined_mod$CrownStress <- round(TreeLvlCombined_mod$CrownStress, digits=0)
-
-```
-
-## Prep the combined model
-
-
-```{r check model vars}
-##last adjustments
-#segment
-TreeLvlCombined_mod$Segment <- as.character(TreeLvlCombined_mod$Segment)
-TreeLvlCombined_mod<- TreeLvlCombined_mod[TreeLvlCombined_mod$Segment != "UIC",]
-TreeLvlCombined_mod$Segment[TreeLvlCombined_mod$Segment == "324"] <- "01_324"
-TreeLvlCombined_mod$Segment <- as.factor(TreeLvlCombined_mod$Segment)
-
-#Site type
+######Site type
 TreeLvlCombined_mod$SiteType <- as.character(TreeLvlCombined_mod$SiteType)
 
 #TreeLvlCombined_mod$SiteType[TreeLvlCombined_mod$SiteType == "FY" | TreeLvlCombined_mod$SiteType == "SY" | TreeLvlCombined_mod$SiteType == "BY"] <- "Yard"
@@ -247,23 +218,97 @@ TreeLvlCombined_mod$SiteType <- as.factor(TreeLvlCombined_mod$SiteType)
 TreeLvlCombined_mod$SiteType <- relevel(TreeLvlCombined_mod$SiteType, ref="01_SC")
 
 
-#Year
-TreeLvlCombined_mod$Year <- as.factor(TreeLvlCombined_mod$Year)
-
-#Crown Light
+########Crown Light
 TreeLvlCombined_mod$CrownLight <- as.numeric(TreeLvlCombined_mod$CrownLight)
 TreeLvlCombined_mod$CrownLight <- round(TreeLvlCombined_mod$CrownLight)
 TreeLvlCombined_mod$CrownLight[TreeLvlCombined_mod$CrownLight == 0] <- 1
 TreeLvlCombined_mod$CrownLight[is.na(TreeLvlCombined_mod$CrownLight)] <- 3 #just give it a moderate value
 TreeLvlCombined_mod$CrownLight <- as.factor(TreeLvlCombined_mod$CrownLight)
 
-##Like for pruning, put a correctly mulched metric in place
+#####powerlines
+TreeLvlCombined_mod$Powerline <- as.factor(TreeLvlCombined_mod$Powerline)
+
+```
+
+```{r prep cues to care}
+
+#Translate Gardenscape into text
+TreeLvlCombined_mod$Gardenscape[TreeLvlCombined_mod$Gardenscape==""] <- "None"
+h1 <- c("None", "Minimal", "Moderate", "Extensive")
+h2 <- c(1:4)
+GDict <- as.data.frame(matrix(c(h1,h2), nrow=4, ncol=2, byrow=FALSE))
+names(GDict) <- c("Original", "Simplified")
+
+TreeLvlCombined_mod$Gardenscape <- GDict$Simplified[match(TreeLvlCombined_mod$Gardenscape, GDict$Original)]
+
+##gardenscape
+TreeLvlCombined_mod$Gardenscape <- as.character(TreeLvlCombined_mod$Gardenscape)
+TreeLvlCombined_mod$Gardenscape[TreeLvlCombined_mod$Gardenscape == 3] <- 4
+TreeLvlCombined_mod$Gardenscape[TreeLvlCombined_mod$Gardenscape == 2] <- 3
+TreeLvlCombined_mod$Gardenscape[TreeLvlCombined_mod$Gardenscape == 1] <- 2
+TreeLvlCombined_mod$Gardenscape[TreeLvlCombined_mod$Gardenscape == 2 & TreeLvlCombined_mod$Mowing %in% c("old", "potentially never")] <- 1
+TreeLvlCombined_mod$Gardenscape <- as.factor(TreeLvlCombined_mod$Gardenscape)
+
+#Pruning
+TreeLvlCombined_mod$PrunedCorrect <-TreeLvlCombined_mod$Pruned
+TreeLvlCombined_mod$PrunedCorrect[TreeLvlCombined_mod$HatrackPrune == 1 | TreeLvlCombined_mod$FlushCutPrune == 1] <- 0
+TreeLvlCombined_mod$PrunedCorrect <- as.factor(TreeLvlCombined_mod$PrunedCorrect )
+
+##create Mulch categories
+TreeLvlCombined_mod$Mulch[TreeLvlCombined_mod$Mulch == 1] <- "Mulch"
+TreeLvlCombined_mod$Mulch[TreeLvlCombined_mod$Mulch == 0] <- "None"
+TreeLvlCombined_mod$Mulch[TreeLvlCombined_mod$MulchVolcano == 1] <- "Volcano"
+
+TreeLvlCombined_mod$Mulch <- as.factor(TreeLvlCombined_mod$Mulch)
+TreeLvlCombined_mod$Mulch <- relevel(TreeLvlCombined_mod$Mulch, ref = "None")
+
+
+##create a correctly mulched metric in place
 TreeLvlCombined_mod$CorrMulch <- TreeLvlCombined_mod$Mulch
 TreeLvlCombined_mod$CorrMulch <- as.character(TreeLvlCombined_mod$CorrMulch)
 TreeLvlCombined_mod$CorrMulch[TreeLvlCombined_mod$CorrMulch == "Mulch"] <- 1
 TreeLvlCombined_mod$CorrMulch[TreeLvlCombined_mod$CorrMulch != 1] <- 0
-TreeLvlCombined_mod$CorrMulch <- as.numeric(TreeLvlCombined_mod$CorrMulch)
+TreeLvlCombined_mod$CorrMulch <- as.factor(TreeLvlCombined_mod$CorrMulch)
+```
 
+```{r prep species}
+#############Species group adjustment
+
+#fix spelling errors and collapse uncertain IDs
+TreeLvlCombined_mod$GenSpe[TreeLvlCombined_mod$Genus == "Fraxinus"] <- "Fraxinus spp."
+TreeLvlCombined_mod$GenSpe[(TreeLvlCombined_mod$GenSpe == "Tilia_cordata") | (TreeLvlCombined_mod$GenSpe == "Tilia_americana")] <- "Tilia spp." #small sample size and some cultivars
+TreeLvlCombined_mod$GenSpe[TreeLvlCombined_mod$GenSpe == "Ulmus_americana"] <- "Ulmus spp." #unsure IDs
+TreeLvlCombined_mod$GenSpe[TreeLvlCombined_mod$GenSpe == "Ulmus_pumila"| TreeLvlCombined_mod$GenSpe == "Ulmus_unknown" | TreeLvlCombined_mod$GenSpe == "Ulmus_spp."] <- "Ulmus spp." #unsure IDs
+
+#get a list of species with at least 50 observations
+SppFreq <- sort(table(TreeLvlCombined_mod$GenSpe),decreasing = TRUE)
+CommonSpp <- SppFreq[SppFreq >= 50]
+#confirm separately that have at least 35 individual trees
+#look at genera frequency for the others
+GenusFreq <- table(TreeLvlCombined_mod$Genus[!(TreeLvlCombined_mod$GenSpe %in% CommonSpp)])
+GenusFreq <- GenusFreq[GenusFreq > 35]
+
+
+#Create a species group category
+#leave the common species alone: G. triacanthos, Ulmus, A. platanoides, Fraxinus spp., Tilia spp., C. occidentalis, G. dioicus
+#Now for the remaining common genera, group them all
+TreeLvlCombined_mod$SppGroup[TreeLvlCombined_mod$GenSpe %in% names(CommonSpp)] <- TreeLvlCombined_mod$GenSpe[TreeLvlCombined_mod$GenSpe %in% names(CommonSpp)]
+TreeLvlCombined_mod$SppGroup <- as.factor(TreeLvlCombined_mod$SppGroup) #for model
+
+#for remaining species, group them by size:
+
+
+#choose baseline species - most common species we saw:Gleditsia triacanthos
+TreeLvlCombined_mod$SppGroup[TreeLvlCombined_mod$SppGroup == "Gleditsia_triacanthos"] <- "AA_Gleditsia_triacanthos"
+
+
+
+```
+
+## Prep the combined model
+
+
+```{r check model vars}
 
 ##make a genus-lvl grouping 
 TreeLvlCombined_mod$GenusGroup <- TreeLvlCombined_mod$Genus
@@ -274,29 +319,6 @@ TreeLvlCombined_mod$GenusGroup[!(TreeLvlCombined_mod$GenusGroup %in% names(Genus
 TreeLvlCombined_mod$GenusGroup <- as.factor(TreeLvlCombined_mod$GenusGroup )
 TreeLvlCombined_mod$GenusGroup <- relevel(TreeLvlCombined_mod$GenusGroup, ref = "01_Other")
 
-##gardenscape
-TreeLvlCombined_mod$Gardenscape <- as.character(TreeLvlCombined_mod$Gardenscape)
-TreeLvlCombined_mod$Gardenscape[TreeLvlCombined_mod$Gardenscape == 3] <- 4
-TreeLvlCombined_mod$Gardenscape[TreeLvlCombined_mod$Gardenscape == 2] <- 3
-TreeLvlCombined_mod$Gardenscape[TreeLvlCombined_mod$Gardenscape == 1] <- 2
-TreeLvlCombined_mod$Gardenscape[TreeLvlCombined_mod$Gardenscape == 2 & TreeLvlCombined_mod$Mowing %in% c("old", "potentially never")] <- 1
-TreeLvlCombined_mod$Gardenscape <- as.factor(TreeLvlCombined_mod$Gardenscape)
-
-#make sure things are factors
-TreeLvlCombined_mod$PercentImperv <- as.factor(TreeLvlCombined_mod$PercentImperv)
-
-#land use
-TreeLvlCombined_mod$LandUse <- as.character(TreeLvlCombined_mod$LandUse)
-TreeLvlCombined_mod$LandUse[TreeLvlCombined_mod$LandUse == "SFR"] <- "01_SFR"
-TreeLvlCombined_mod$LandUse <- as.factor(TreeLvlCombined_mod$LandUse)
-TreeLvlCombined_mod$LandUse <- relevel(TreeLvlCombined_mod$LandUse, ref="01_SFR")
-
-
-#######to mke sure they are treated right in the model
-TreeLvlCombined_mod$CorrMulch <- as.factor(TreeLvlCombined_mod$CorrMulch)
-TreeLvlCombined_mod$PrunedCorrect <- as.factor(TreeLvlCombined_mod$PrunedCorrect )
-TreeLvlCombined_mod$UrbanApp <- as.factor(TreeLvlCombined_mod$UrbanApp)
-TreeLvlCombined_mod$Powerline <- as.factor(TreeLvlCombined_mod$Powerline)
 
 ```
 
