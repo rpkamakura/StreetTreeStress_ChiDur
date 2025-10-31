@@ -285,44 +285,28 @@ SppFreq <- sort(table(TreeLvlCombined_mod$GenSpe),decreasing = TRUE)
 CommonSpp <- SppFreq[SppFreq >= 50]
 #confirm separately that have at least 35 individual trees
 #look at genera frequency for the others
-GenusFreq <- table(TreeLvlCombined_mod$Genus[!(TreeLvlCombined_mod$GenSpe %in% CommonSpp)])
-GenusFreq <- GenusFreq[GenusFreq > 35]
+remainingSpp <- TreeLvlCombined_mod$Genus[!(TreeLvlCombined_mod$GenSpe %in% names(CommonSpp))]
+GenusFreq <- table(remainingSpp)
+CommonGenus <- GenusFreq[GenusFreq > 35]
 
 
 #Create a species group category
 #leave the common species alone: G. triacanthos, Ulmus, A. platanoides, Fraxinus spp., Tilia spp., C. occidentalis, G. dioicus
-#Now for the remaining common genera, group them all
-TreeLvlCombined_mod$SppGroup[TreeLvlCombined_mod$GenSpe %in% names(CommonSpp)] <- TreeLvlCombined_mod$GenSpe[TreeLvlCombined_mod$GenSpe %in% names(CommonSpp)]
-TreeLvlCombined_mod$SppGroup <- as.factor(TreeLvlCombined_mod$SppGroup) #for model
+#then you have these genera with enough spp to work with: Acer other, Quercus other
+#group the rest by size
+#going to do this backwards to make it easier to implement
 
-#for remaining species, group them by size:
-
-
-#choose baseline species - most common species we saw:Gleditsia triacanthos
+TreeLvlCombined_mod$SppGroup[TreeLvlCombined_mod$TreeSize == "Small"] <- "Other_sm" #group by size
+TreeLvlCombined_mod$SppGroup[TreeLvlCombined_mod$TreeSize == "Medium"] <- "Other_md" #group by size
+TreeLvlCombined_mod$SppGroup[TreeLvlCombined_mod$TreeSize == "Large"] <- "Other_lg" #group by size
+TreeLvlCombined_mod$SppGroup[TreeLvlCombined_mod$Genus %in% names(CommonGenus)]<- TreeLvlCombined_mod$Genus[TreeLvlCombined_mod$Genus %in% names(CommonGenus)] #common genera
+TreeLvlCombined_mod$SppGroup[TreeLvlCombined_mod$GenSpe %in% names(CommonSpp)] <- TreeLvlCombined_mod$GenSpe[TreeLvlCombined_mod$GenSpe %in% names(CommonSpp)] #common species
+#choose baseline species - most common species we saw: Gleditsia triacanthos
 TreeLvlCombined_mod$SppGroup[TreeLvlCombined_mod$SppGroup == "Gleditsia_triacanthos"] <- "AA_Gleditsia_triacanthos"
 
-
-
-```
-
-## Prep the combined model
-
-
-```{r check model vars}
-
-##make a genus-lvl grouping 
-TreeLvlCombined_mod$GenusGroup <- TreeLvlCombined_mod$Genus
-GenusFreq <- table(TreeLvlCombined_mod$Genus)
-GenusFreq <- GenusFreq[GenusFreq > 40]
-
-TreeLvlCombined_mod$GenusGroup[!(TreeLvlCombined_mod$GenusGroup %in% names(GenusFreq))] <- "01_Other"
-TreeLvlCombined_mod$GenusGroup <- as.factor(TreeLvlCombined_mod$GenusGroup )
-TreeLvlCombined_mod$GenusGroup <- relevel(TreeLvlCombined_mod$GenusGroup, ref = "01_Other")
-
+TreeLvlCombined_mod$SppGroup <- as.factor(TreeLvlCombined_mod$SppGroup) #for model
 
 ```
-
-
 
 
 ##get model runs
