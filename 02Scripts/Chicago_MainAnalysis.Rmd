@@ -61,9 +61,6 @@ basalArea <- function(dbh){
 
 ##Multiple Tree Health Variables
 
-Follow-up on:
-Error, no generic genus-level information for Liriodendron Tree # 1020
-
 ```{r pull in tree-lvl data}
 #tree species information
 SppSpecificData <- read.csv("../01Data/Chicago/SpeciesInformation_Chicago_Dirr.csv")
@@ -204,19 +201,13 @@ TreeLvlCombined_mod$PercentImperv[TreeLvlCombined_mod$PercentImperv ==5] <- 4 #7
 TreeLvlCombined_mod$PercentImperv <- as.factor(TreeLvlCombined_mod$PercentImperv)
 
 ######Site type
-TreeLvlCombined_mod$SiteType <- as.character(TreeLvlCombined_mod$SiteType)
+TreeLvlCombined_mod$SiteType <- as.character(TreeLvlCombined_mod$SiteType) #to edit more easily
 
-#TreeLvlCombined_mod$SiteType[TreeLvlCombined_mod$SiteType == "FY" | TreeLvlCombined_mod$SiteType == "SY" | TreeLvlCombined_mod$SiteType == "BY"] <- "Yard"
+TreeLvlCombined_mod$SiteType[is.null(TreeLvlCombined_mod$SiteType) |TreeLvlCombined_mod$SiteType== ""| TreeLvlCombined_mod$SiteType== "MP" | TreeLvlCombined_mod$SiteType == "OM"] <- "Other"
 
-#TreeLvlCombined_mod$SiteType[TreeLvlCombined_mod$SiteType == "OM" | TreeLvlCombined_mod$SiteType == "OH"] <- "OMH"
-
-TreeLvlCombined_mod$SiteType[is.null(TreeLvlCombined_mod$SiteType) |TreeLvlCombined_mod$SiteType== ""| TreeLvlCombined_mod$SiteType== "MP" | TreeLvlCombined_mod$SiteType == "OM" | TreeLvlCombined_mod$SiteType == "OH"] <- "Other"
-
-TreeLvlCombined_mod$SiteType[TreeLvlCombined_mod$SiteType == "SC"] <- "01_SC"
+TreeLvlCombined_mod$SiteType[TreeLvlCombined_mod$SiteType == "SC"] <- "AA_SC" #set as baseline
 
 TreeLvlCombined_mod$SiteType <- as.factor(TreeLvlCombined_mod$SiteType)
-TreeLvlCombined_mod$SiteType <- relevel(TreeLvlCombined_mod$SiteType, ref="01_SC")
-
 
 ########Crown Light
 TreeLvlCombined_mod$CrownLight <- as.numeric(TreeLvlCombined_mod$CrownLight)
@@ -256,19 +247,18 @@ TreeLvlCombined_mod$PrunedCorrect <- as.factor(TreeLvlCombined_mod$PrunedCorrect
 
 ##create Mulch categories
 TreeLvlCombined_mod$Mulch[TreeLvlCombined_mod$Mulch == 1] <- "Mulch"
-TreeLvlCombined_mod$Mulch[TreeLvlCombined_mod$Mulch == 0] <- "None"
+TreeLvlCombined_mod$Mulch[TreeLvlCombined_mod$Mulch == 0] <- "AA_None"
 TreeLvlCombined_mod$Mulch[TreeLvlCombined_mod$MulchVolcano == 1] <- "Volcano"
 
 TreeLvlCombined_mod$Mulch <- as.factor(TreeLvlCombined_mod$Mulch)
-TreeLvlCombined_mod$Mulch <- relevel(TreeLvlCombined_mod$Mulch, ref = "None")
 
 
-##create a correctly mulched metric in place
-TreeLvlCombined_mod$CorrMulch <- TreeLvlCombined_mod$Mulch
-TreeLvlCombined_mod$CorrMulch <- as.character(TreeLvlCombined_mod$CorrMulch)
-TreeLvlCombined_mod$CorrMulch[TreeLvlCombined_mod$CorrMulch == "Mulch"] <- 1
-TreeLvlCombined_mod$CorrMulch[TreeLvlCombined_mod$CorrMulch != 1] <- 0
-TreeLvlCombined_mod$CorrMulch <- as.factor(TreeLvlCombined_mod$CorrMulch)
+# ##create a correctly mulched metric in place
+# TreeLvlCombined_mod$CorrMulch <- TreeLvlCombined_mod$Mulch
+# TreeLvlCombined_mod$CorrMulch <- as.character(TreeLvlCombined_mod$CorrMulch)
+# TreeLvlCombined_mod$CorrMulch[TreeLvlCombined_mod$CorrMulch == "Mulch"] <- 1
+# TreeLvlCombined_mod$CorrMulch[TreeLvlCombined_mod$CorrMulch != 1] <- 0
+# TreeLvlCombined_mod$CorrMulch <- as.factor(TreeLvlCombined_mod$CorrMulch)
 ```
 
 ```{r prep species}
@@ -282,17 +272,17 @@ TreeLvlCombined_mod$GenSpe[TreeLvlCombined_mod$GenSpe == "Ulmus_pumila"| TreeLvl
 
 #get a list of species with at least 50 observations
 SppFreq <- sort(table(TreeLvlCombined_mod$GenSpe),decreasing = TRUE)
-CommonSpp <- SppFreq[SppFreq >= 50]
+CommonSpp <- SppFreq[SppFreq >= 72]
 #confirm separately that have at least 35 individual trees
 #look at genera frequency for the others
 remainingSpp <- TreeLvlCombined_mod$Genus[!(TreeLvlCombined_mod$GenSpe %in% names(CommonSpp))]
 GenusFreq <- table(remainingSpp)
-CommonGenus <- GenusFreq[GenusFreq > 35]
+CommonGenus <- GenusFreq[GenusFreq > 72]
 
 
 #Create a species group category
 #leave the common species alone: G. triacanthos, Ulmus, A. platanoides, Fraxinus spp., Tilia spp., C. occidentalis, G. dioicus
-#then you have these genera with enough spp to work with: Acer other, Quercus other
+#then you have these genera with enough spp to work with
 #group the rest by size
 #going to do this backwards to make it easier to implement
 
@@ -308,13 +298,13 @@ TreeLvlCombined_mod$SppGroup <- as.factor(TreeLvlCombined_mod$SppGroup) #for mod
 
 ```
 
+## Check correlations
+```{r check corrs}
 
+```
 ##get model runs
 
 ```{r get model runs}
-
-#get rid of trees with incomplete data
-#TreeLvlCombined_mod <- TreeLvlCombined_mod[!is.na(TreeLvlCombined_mod$GentrificationRisk),]
 
 ###Set up for gjam run
 TypeNames <- c("OC", "OC", "OC")
@@ -326,11 +316,11 @@ ydata <- TreeLvlCombined_mod[,c("Defoliation", "Discoloration", "Dieback")]
 mlsimp <- list(ng = 20000, burnin = 5000, typeNames = TypeNames, random="TreeName")
 
 #function
-fmcomplex = ~ Segment + Year + BasalArea*GenusGroup + Powerline + PercentImperv + CorrMulch + Gardenscape + PrunedCorrect + CrownLight + UrbanApp*SiteType + LandUse
+fmcomplex = ~ Segment + Year + BasalArea*SppGroup + Powerline + PercentImperv + Mulch + Gardenscape + PrunedCorrect + CrownLight + UrbanApp*SiteType + LandUse
 
 #get x data
-xdataCom <- TreeLvlCombined_mod[,c("TreeName", "Segment", "Year", "BasalArea", "GenusGroup","CorrMulch", "PercentImperv",   "TreeSize", "Powerline", "SiteType", "Gardenscape","PrunedCorrect", "CrownLight", "UrbanApp", "LandUse")]
-xdataCom$BasalArea <- scale(xdataCom$BasalArea)
+xdataCom <- TreeLvlCombined_mod[,c("TreeName", "Segment", "Year", "BasalArea", "SppGroup","Mulch", "PercentImperv",   "TreeSize", "Powerline", "SiteType", "Gardenscape","PrunedCorrect", "CrownLight", "UrbanApp", "LandUse")]
+xdataCom$BasalArea <- scale(xdataCom$BasalArea) #maybe log transform instead?
 
 #run gjam model
 
@@ -344,84 +334,9 @@ out3var <- gjam(fmcomplex, xdataCom, ydata, modelList = mlsimp)
 mlsimp <- list(ng = 10000, burnin = 5000, typeNames = TypeNames, random="TreeName")
 
 
-##no crown light
-fmcomplex2 = ~ Segment + Year + BasalArea*GenusGroup + Powerline + PercentImperv + CorrMulch + Gardenscape + PrunedCorrect + UrbanApp*SiteType + LandUse
-
-out3var2 <- gjam(fmcomplex2, xdataCom, ydata, modelList = mlsimp)
-
-###no percent impervious
-fmcomplex3 = ~ Segment + Year + BasalArea*GenusGroup + Powerline + CorrMulch + Gardenscape + PrunedCorrect + CrownLight + UrbanApp*SiteType + LandUse
-
-out3var3 <- gjam(fmcomplex3, xdataCom, ydata, modelList = mlsimp)
-
-
 
 ```
 
-
-```{r 3Ds model refine}
-###no crown light, no percent impervious
-fmcomplex4 = ~ Segment + Year + BasalArea*GenusGroup + Powerline+ CorrMulch + Gardenscape + PrunedCorrect + UrbanApp*SiteType + LandUse
-
-out3var4 <- gjam(fmcomplex4, xdataCom, ydata, modelList = mlsimp)
-
-###no crown light, no percent impervious, no Corr mulch
-fmcomplex5 = ~ Segment + Year + BasalArea*GenusGroup + Powerline + Gardenscape + PrunedCorrect + UrbanApp*SiteType + LandUse
-
-out3var5 <- gjam(fmcomplex5, xdataCom, ydata, modelList = mlsimp)
-
-
-###no crown light, no percent impervious, no pruned correct
-fmcomplex6 = ~ Segment + Year + BasalArea*GenusGroup + Powerline+ CorrMulch + Gardenscape + UrbanApp*SiteType + LandUse
-
-out3var6 <- gjam(fmcomplex6, xdataCom, ydata, modelList = mlsimp)
-
-
-###no crown light, no percent impervious, no powerline
-fmcomplex7 = ~ Segment + Year + BasalArea*GenusGroup + CorrMulch + Gardenscape + PrunedCorrect + UrbanApp*SiteType + LandUse
-
-out3var7 <- gjam(fmcomplex7, xdataCom, ydata, modelList = mlsimp)
-
-
-###no crown light, no percent impervious, no gardenscape
-fmcomplex8 = ~ Segment + Year + BasalArea*GenusGroup + Powerline+ CorrMulch + PrunedCorrect + UrbanApp*SiteType + LandUse
-
-out3var8 <- gjam(fmcomplex8, xdataCom, ydata, modelList = mlsimp)
-
-#######################################################Next round
-mlsimp <- list(ng = 10000, burnin = 5000, typeNames = TypeNames, random="TreeName")
-
-###no crown light, no percent impervious, no Corr mulch, no powerline
-fmcomplex9 = ~ Segment + Year + BasalArea*GenusGroup + Gardenscape + PrunedCorrect + UrbanApp*SiteType + LandUse
-
-out3var9 <- gjam(fmcomplex9, xdataCom, ydata, modelList = mlsimp)
-
-###no crown light, no percent impervious, no Corr mulch, no pruned correct
-fmcomplex10 = ~ Segment + Year + BasalArea*GenusGroup + Powerline + Gardenscape+ UrbanApp*SiteType + LandUse
-
-out3var10 <- gjam(fmcomplex10, xdataCom, ydata, modelList = mlsimp)
-
-###no crown light, no percent impervious, no pruned correct, no powerline
-fmcomplex11 = ~ Segment + Year + BasalArea*GenusGroup + CorrMulch + Gardenscape + UrbanApp*SiteType + LandUse
-
-out3var11 <- gjam(fmcomplex11, xdataCom, ydata, modelList = mlsimp)
-
-##################################################################################
-###no crown light, no percent impervious, no Corr mulch, no powerline, no pruned correct
-fmcomplex12 = ~ Segment + Year + BasalArea*GenusGroup + Gardenscape + UrbanApp*SiteType + LandUse
-
-out3var12 <- gjam(fmcomplex12, xdataCom, ydata, modelList = mlsimp)
-###############################################################################
-
-
-#######check sensitivity values
-##try without gardenscape
-fmcomplex13 = ~ Segment + Year + BasalArea*GenusGroup + UrbanApp*SiteType + LandUse
-
-out3var13 <- gjam(fmcomplex13, xdataCom, ydata, modelList = mlsimp)
-
-
-```
 
 ##Crown stress
 
@@ -441,7 +356,7 @@ mlsimp <- list(ng = 10000, burnin = 5000, typeNames = TypeNames, random="TreeNam
 #Get the y values
 TreeLvlCombined_CV$y <- TreeLvlCombined_CV$CrownStress
 
-fmcomplexCV <- y ~ Segment + Year + BasalArea*GenusGroup + Powerline+ CorrMulch + Gardenscape + PrunedCorrect + UrbanApp*SiteType + LandUse
+fmcomplexCV <- y ~ Segment + Year + BasalArea*GenusGroup + Powerline+ Mulch + Gardenscape + PrunedCorrect + UrbanApp*SiteType + LandUse
 
 outMcomplex <- or( formula = fmcomplexCV, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 1000 )
 
@@ -458,71 +373,6 @@ sensitivity$Sigma <- rep((SS/(length(outMcomplex$inputs$data$y) - 2)), length(se
 sensitivity$Sensitivity <- abs(sensitivity$Beta_est/sqrt(sensitivity$Sigma))
 
 ####get rid of things based on sensitivity
-
-##no gardenscape
-fmcomplexCV2 <- y ~ Segment + Year + BasalArea*GenusGroup + Powerline+ CorrMulch + PrunedCorrect + UrbanApp*SiteType + LandUse
-outMcomplex2 <- or( formula = fmcomplexCV2, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 1000 )
-
-##no pruned correct
-fmcomplexCV3 <- y ~ Segment + Year + BasalArea*GenusGroup + Powerline+ CorrMulch + Gardenscape + UrbanApp*SiteType + LandUse
-outMcomplex3 <- or( formula = fmcomplexCV3, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 1000 )
-
-##no powerline
-fmcomplexCV4 <- y ~ Segment + Year + BasalArea*GenusGroup + CorrMulch + Gardenscape + PrunedCorrect + UrbanApp*SiteType + LandUse
-outMcomplex4 <- or( formula = fmcomplexCV4, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 1000 )
-
-##no urban app interaction
-fmcomplexCV5 <- y ~ Segment + Year + BasalArea*GenusGroup + Powerline+ CorrMulch + Gardenscape + PrunedCorrect + UrbanApp + SiteType + LandUse
-outMcomplex5 <- or( formula = fmcomplexCV5, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 1000 )
-
-
-##################################next round of edits
-##no urban app interaction, no gardenscape
-fmcomplexCV6 <- y ~ Segment + Year + BasalArea*GenusGroup + Powerline+ CorrMulch+ PrunedCorrect + UrbanApp + SiteType + LandUse
-outMcomplex6 <- or( formula = fmcomplexCV6, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 1000 )
-
-##no gardenscape, no pruned correct
-fmcomplexCV7 <- y ~ Segment + Year + BasalArea*GenusGroup + Powerline+ CorrMulch + UrbanApp*SiteType + LandUse
-outMcomplex7 <- or( formula = fmcomplexCV7, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 1000 )
-
-##no gardenscape, no powerline
-fmcomplexCV8 <- y ~ Segment + Year + BasalArea*GenusGroup + CorrMulch + PrunedCorrect + UrbanApp*SiteType + LandUse
-outMcomplex8 <- or( formula = fmcomplexCV8, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 1000 )
-
-##no gardenscape, no pruned correct, no powerline
-fmcomplexCV9 <- y ~ Segment + Year + BasalArea*GenusGroup + CorrMulch + UrbanApp*SiteType + LandUse
-outMcomplex9 <- or( formula = fmcomplexCV9, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 1000 )
-
-
-##no urban app interaction, no gardenscape, no pruned correct
-fmcomplexCV10 <- y ~ Segment + Year + BasalArea*GenusGroup + Powerline+ CorrMulch + UrbanApp + SiteType + LandUse
-outMcomplex10 <- or( formula = fmcomplexCV10, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 1000 )
-
-##no urban app interaction, no gardenscape, no powerline
-fmcomplexCV11 <- y ~ Segment + Year + BasalArea*GenusGroup + PrunedCorrect + CorrMulch + UrbanApp + SiteType + LandUse
-outMcomplex11 <- or( formula = fmcomplexCV11, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 1000 )
-
-##no urban app interaction, no gardenscape, no pruned correct, no powerline
-fmcomplexCV12 <- y ~ Segment + Year + BasalArea*GenusGroup + CorrMulch + UrbanApp + SiteType + LandUse
-outMcomplex12 <- or( formula = fmcomplexCV12, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 1000 )
-
-
-###################################next round based on sensitivity
-
-###########################################################################
-##no urban app interaction, no gardenscape, no pruned correct, no powerline, no corr mulch
-fmcomplexCV13 <- y ~ Segment + Year + BasalArea*GenusGroup + UrbanApp + SiteType + LandUse
-outMcomplex13 <- or( formula = fmcomplexCV13, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 1000 )
-##########################################################################
-
-##no urban app interaction, no gardenscape, no pruned correct, no powerline, no land use
-fmcomplexCV14 <- y ~ Segment + Year + BasalArea*GenusGroup + CorrMulch + UrbanApp + SiteType
-outMcomplex14 <- or( formula = fmcomplexCV14, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 1000 )
-
-##no urban app interaction, no gardenscape, no pruned correct, no powerline, no corr mulch, no land use
-fmcomplexCV15 <- y ~ Segment + Year + BasalArea*GenusGroup + UrbanApp + SiteType
-outMcomplex15 <- or( formula = fmcomplexCV15, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 1000 )
-
 
 ```
 
@@ -565,7 +415,7 @@ for (t in 1:length(uniTrees)){
     summaryDat$LandUse[t] <- mostRecDat$LandUse[1]
     summaryDat$PercImperv[t] <- mostRecDat$PercentImperv[1]
     summaryDat$Powerline[t] <- mostRecDat$Powerline[1]
-    summaryDat$Mulch[t] <- mostRecDat$CorrMulch[1]
+    summaryDat$Mulch[t] <- mostRecDat$Mulch[1]
     summaryDat$MulchVolcano[t] <- mostRecDat$MulchVolcano[1]
     summaryDat$CorrPrune[t] <- mostRecDat$PrunedCorrect[1]
     summaryDat$Pruned[t] <- mostRecDat$Pruned[1]
@@ -589,7 +439,7 @@ for (t in 1:length(uniTrees)){
     summaryDat$LandUse[t] <- mostRecDat$LandUse
     summaryDat$PercImperv[t] <- mostRecDat$PercentImperv
     summaryDat$Powerline[t] <- mostRecDat$Powerline
-    summaryDat$Mulch[t] <- mostRecDat$CorrMulch
+    summaryDat$Mulch[t] <- mostRecDat$Mulch
     summaryDat$MulchVolcano[t] <- mostRecDat$MulchVolcano
     summaryDat$CorrPrune[t] <- mostRecDat$PrunedCorrect
     summaryDat$Pruned[t] <- mostRecDat$Pruned
