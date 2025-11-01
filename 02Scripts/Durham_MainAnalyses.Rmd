@@ -301,6 +301,186 @@ TreeLvlCombined_mod$SegmentMod <- as.factor(TreeLvlCombined_mod$SegmentMod)
 
 TreeLvlCombined_mod <- TreeLvlCombined_mod[!is.na(TreeLvlCombined_mod$TreeName),]
 ```
+## Check correlations
+
+Need to update this still
+```{r between pred corr}
+##Pull in relevant R packages
+library(psych)####Tetrachoric - binary
+#tetrachoric(data)
+
+library(polycor)##Polychoric - ordinal
+#polychor(x,y)
+
+library(rcompanion)##Cramer's V - nominal
+#cramerV(data)
+
+#Look at the variables
+preds <- c("TreeName", "Segment", "Year", "BasalArea", "SppGroup","Mulch", "PercentImperv", "Powerline", "UrbanApp", "SiteType", "Gardenscape","PrunedCorrect", "CrownLight", "LandUse")
+
+#binary
+binVars <- c("Powerline","UrbanApp","PrunedCorrect")
+oVars <- binVars #so you can do pairwise comparisons
+
+for(b in 1:length(binVars)){
+  #pick starting variable
+  b1 <- binVars[b]
+  oVars <- oVars[oVars != b1] #the other ones left
+  
+  #if none left
+  if(length(oVars) == 0){
+    print("Done with all pairwise comparisons!")
+    next
+  } 
+  
+  #for each remaining combination
+  for (c in 1:length(oVars)){
+    b2 <- oVars[c]
+    tb <- table(TreeLvlCombined_mod[,c(b1,b2)])
+    
+    tet <- tetrachoric(x=tb,)
+    
+    print(paste("The tetrachoric rho for", b1, "and", b2, "is:", tet$rho))
+  }
+  
+}
+
+
+#ordinal
+ordVars <- c("PercentImperv","Gardenscape","CrownLight", "LandUse")
+oVars_o <- ordVars #so you can do pairwise comparisons
+
+for(o in 1:length(ordVars)){
+  #pick starting variable
+  o1 <- ordVars[o]
+  oVars_o <- oVars_o[oVars_o != o1] #the other ones left
+  
+  #if none left
+  if(length(oVars_o) == 0){
+    print("Done with all pairwise comparisons!")
+    next
+  } 
+  
+  #for each remaining combination
+  for (p in 1:length(oVars_o)){
+    o2 <- oVars_o[p]
+    
+    pol <- polychor(TreeLvlCombined_mod[,c(o1)],TreeLvlCombined_mod[,c(o2)])
+    print(paste("The polychoric correlation for", o1, "and", o2, "is:", pol))
+  }
+  
+}
+
+#nominal
+nomVars <- c("Segment", "SppGroup","Mulch","SiteType")
+oVars_n <- nomVars #so you can do pairwise comparisons
+
+for(n in 1:length(nomVars)){
+  #pick starting variable
+  n1 <- nomVars[n]
+  oVars_n <- oVars_n[oVars_n != n1] #the other ones left
+  
+  #if none left
+  if(length(oVars_n) == 0){
+    print("Done with all pairwise comparisons!")
+    next
+  } 
+  
+  #for each remaining combination
+  for (m in 1:length(oVars_n)){
+    n2 <- oVars_n[m]
+    tb_n <- table(TreeLvlCombined_mod[,c(n1,n2)])
+    
+    cramV <- cramerV(tb_n)
+    
+    print(paste("Cramer's V for", n1, "and", n2, "is:", cramV))
+  }
+  
+}
+
+
+#############################Visuals for the ones we want to interact
+###SppGroup and powerline
+TS_pow <- table(TreeLvlCombined_mod[c("SppGroup", "Powerline")])
+PercTS_pow <- TS_pow/rowSums(TS_pow)
+print(PercTS_pow)
+
+
+###Urban App and Site Type
+UA_ST <- table(TreeLvlCombined_mod[c("UrbanApp", "SiteType")])
+PercUA_ST <- UA_ST/rowSums(UA_ST)
+print(PercUA_ST)
+
+
+###Urban App and LandUse
+UA_LU <- table(TreeLvlCombined_mod[c("UrbanApp", "LandUse")])
+PercUA_LU <- UA_LU/rowSums(UA_LU)
+print(PercUA_LU)
+
+
+##Urban App and Percent Imperv
+UA_PI <- table(TreeLvlCombined_mod[c("UrbanApp", "PercentImperv")])
+PercUA_PI <- UA_PI/rowSums(UA_PI)
+print(PercUA_PI)
+
+
+##Site Type and Perc Imperv
+ST_PI <- table(TreeLvlCombined_mod[c("SiteType", "PercentImperv")])
+PercST_PI <- ST_PI/rowSums(ST_PI)
+print(PercST_PI)
+
+
+##Site Type and Land Use
+ST_LU <- table(TreeLvlCombined_mod[c("SiteType", "LandUse")])
+PercST_LU <- ST_LU/rowSums(ST_LU)
+print(PercST_LU)
+
+####################SpeciesGroups
+OSppGroups_sm <-TreeLvlCombined_mod[TreeLvlCombined_mod$SppGroup == "Other_sm",]
+totTrees_sm <- length(OSppGroups_sm$Segment)
+
+OSppGroups_md <-TreeLvlCombined_mod[TreeLvlCombined_mod$SppGroup == "Other_md",]
+totTrees_md <- length(OSppGroups_md$Segment)
+
+OSppGroups_lg <-TreeLvlCombined_mod[TreeLvlCombined_mod$SppGroup == "Other_lg",]
+totTrees_lg <- length(OSppGroups_lg$Segment)
+
+##SppGroup - sm x UrbanApp
+PercSGs_UA <- table(OSppGroups_sm$UrbanApp)/totTrees_sm
+print(PercSGs_UA)
+
+
+PercSGm_UA <- table(OSppGroups_md$UrbanApp)/totTrees_md
+print(PercSGm_UA)
+
+
+PercSGl_UA <- table(OSppGroups_lg$UrbanApp)/totTrees_lg
+print(PercSGl_UA)
+
+
+###################Boxplots
+##Basal Area x Mulch (boxplot)
+ggplot(TreeLvlCombined_mod, aes(x = BasalArea, y = Mulch)) +
+  geom_violin() + stat_summary(fun.y=median, geom="point", size=2, color="red") 
+
+#there is a range but the biggest trees have none
+
+##Basal Area x Pruned Correct (boxplot)
+TreeLvlCombined_mod$PrunedCorrect <- as.character(TreeLvlCombined_mod$PrunedCorrect )
+#to be conservative here
+TreeLvlCombined_mod$PrunedCorrect[is.na(TreeLvlCombined_mod$PrunedCorrect )] <- 0
+TreeLvlCombined_mod$PrunedCorrect <- as.factor(TreeLvlCombined_mod$PrunedCorrect)
+
+ggplot(TreeLvlCombined_mod, aes(x = BasalArea, y = PrunedCorrect)) +
+  geom_violin() + stat_summary(fun.y=median, geom="point", size=2, color="red")
+
+ggplot(TreeLvlCombined_mod, aes(y = BasalArea, x = PrunedCorrect, colour = PrunedCorrect)) +
+  geom_boxplot() +
+  geom_jitter()
+
+#pretty similar distributions
+
+```
 
 
 ##Run models
@@ -331,7 +511,17 @@ out3varST <- gjam(fmcomplex, xdataCom, ydata, modelList = mlsimp)
 # ppars <- list(SAVEPLOTS=T)
 # gjamPlot(out3varST, plotPars=ppars)
 
-
+####Get sensitivity values
+# sensitivity <- as.data.frame(matrix(0, ncol=4,nrow=length(outMcomplexST$parameters$beta$Estimate)))
+# names(sensitivity) <- c("Variable", "Beta_est", "Sigma", "Sensitivity")
+# sensitivity$Beta_est <- outMcomplexST$parameters$beta$Estimate
+# sensitivity$Variable <- rownames(outMcomplexST$parameters$beta)
+# 
+# ##how to get the residual variance
+# SS <- sumSquares(outMcomplexST$prediction[,1], outMcomplexST$inputs$data$y)
+# sensitivity$Sigma <- rep((SS/(length(outMcomplexST$inputs$data$y) - 2)), length(sensitivity$Variable))
+# 
+# sensitivity$Sensitivity <- abs(sensitivity$Beta_est/sqrt(sensitivity$Sigma))
 ```
 
 

@@ -163,6 +163,7 @@ TreeLvlCombined_mod$Year <- as.factor(TreeLvlCombined_mod$Year)
 ############Tree characteristics
 ##prep basal area
 TreeLvlCombined_mod$BasalArea <- sapply(TreeLvlCombined_mod$TotalDBH, basalArea)
+TreeLvlCombined_mod <- TreeLvlCombined_mod[!is.na(TreeLvlCombined_mod$BasalArea),]
 
 #group the tree size variable
 thresh1 <- 35 #should check if this is a reasonable grouping
@@ -187,7 +188,7 @@ TreeLvlCombined_mod$LandUse[TreeLvlCombined_mod$LandUse == "SFR-A" | TreeLvlComb
 ##Commercial + Mixed
 TreeLvlCombined_mod$LandUse[TreeLvlCombined_mod$LandUse == "COMM" | TreeLvlCombined_mod$LandUse == "MIX"] <- "COMM_Mx"
 #Other (industrial + vacant)
-TreeLvlCombined_mod$LandUse[TreeLvlCombined_mod$LandUse == "V" | TreeLvlCombined_mod$LandUse == "UT" | TreeLvlCombined_mod$LandUse == "IND" | TreeLvlCombined_mod$LandUse == "TR" | TreeLvlCombined_mod$LandUse == "AG" ] <- "Other"
+TreeLvlCombined_mod$LandUse[TreeLvlCombined_mod$LandUse == ""| TreeLvlCombined_mod$LandUse == "V" | TreeLvlCombined_mod$LandUse == "UT" | TreeLvlCombined_mod$LandUse == "IND" | TreeLvlCombined_mod$LandUse == "TR" | TreeLvlCombined_mod$LandUse == "AG" ] <- "Other"
 #turn back into factor
 TreeLvlCombined_mod$LandUse <- as.factor(TreeLvlCombined_mod$LandUse)
 
@@ -198,6 +199,7 @@ TreeLvlCombined_mod$PercentImperv[TreeLvlCombined_mod$PercentImperv ==3] <- 2 #2
 TreeLvlCombined_mod$PercentImperv[TreeLvlCombined_mod$PercentImperv ==4] <- 3 #51-75
 TreeLvlCombined_mod$PercentImperv[TreeLvlCombined_mod$PercentImperv ==5] <- 4 #76-100
 
+TreeLvlCombined_mod <- TreeLvlCombined_mod[!is.na(TreeLvlCombined_mod$PercentImperv),]
 TreeLvlCombined_mod$PercentImperv <- as.factor(TreeLvlCombined_mod$PercentImperv)
 
 ######Site type
@@ -217,7 +219,8 @@ TreeLvlCombined_mod$CrownLight[is.na(TreeLvlCombined_mod$CrownLight)] <- 3 #just
 TreeLvlCombined_mod$CrownLight <- as.factor(TreeLvlCombined_mod$CrownLight)
 
 #####powerlines
-TreeLvlCombined_mod$Powerline <- as.factor(TreeLvlCombined_mod$Powerline)
+TreeLvlCombined_mod$Powerline[TreeLvlCombined_mod$Powerline] <- 1
+TreeLvlCombined_mod$Powerline[TreeLvlCombined_mod$Powerline == FALSE] <- 0
 
 ```
 
@@ -293,18 +296,254 @@ TreeLvlCombined_mod$SppGroup[TreeLvlCombined_mod$Genus %in% names(CommonGenus)]<
 TreeLvlCombined_mod$SppGroup[TreeLvlCombined_mod$GenSpe %in% names(CommonSpp)] <- TreeLvlCombined_mod$GenSpe[TreeLvlCombined_mod$GenSpe %in% names(CommonSpp)] #common species
 #choose baseline species - most common species we saw: Gleditsia triacanthos
 TreeLvlCombined_mod$SppGroup[TreeLvlCombined_mod$SppGroup == "Gleditsia_triacanthos"] <- "AA_Gleditsia_triacanthos"
-
+TreeLvlCombined_mod <- TreeLvlCombined_mod[!is.na(TreeLvlCombined_mod$SppGroup),]
 TreeLvlCombined_mod$SppGroup <- as.factor(TreeLvlCombined_mod$SppGroup) #for model
 
 ```
 
 ## Check correlations
-```{r check corrs}
+
+Need to update this still
+```{r between pred corr}
+##Pull in relevant R packages
+library(psych)####Tetrachoric - binary
+#tetrachoric(data)
+
+library(polycor)##Polychoric - ordinal
+#polychor(x,y)
+
+library(rcompanion)##Cramer's V - nominal
+#cramerV(data)
+
+#Look at the variables
+preds <- c("TreeName", "Segment", "Year", "BasalArea", "SppGroup","Mulch", "PercentImperv", "Powerline", "UrbanApp", "SiteType", "Gardenscape","PrunedCorrect", "CrownLight", "LandUse")
+
+#binary
+binVars <- c("Powerline","UrbanApp","PrunedCorrect")
+oVars <- binVars #so you can do pairwise comparisons
+
+for(b in 1:length(binVars)){
+  #pick starting variable
+  b1 <- binVars[b]
+  oVars <- oVars[oVars != b1] #the other ones left
+  
+  #if none left
+  if(length(oVars) == 0){
+    print("Done with all pairwise comparisons!")
+    next
+  } 
+  
+  #for each remaining combination
+  for (c in 1:length(oVars)){
+    b2 <- oVars[c]
+    tb <- table(TreeLvlCombined_mod[,c(b1,b2)])
+    
+    tet <- tetrachoric(x=tb,)
+    
+    print(paste("The tetrachoric rho for", b1, "and", b2, "is:", tet$rho))
+  }
+  
+}
+
+# [1] "The tetrachoric rho for Powerline and UrbanApp is: 0.0419419222489716"
+# [1] "The tetrachoric rho for Powerline and PrunedCorrect is: -0.173576701820483"
+# [1] "The tetrachoric rho for UrbanApp and PrunedCorrect is: -0.0332825610940145"
+
+#ordinal
+ordVars <- c("PercentImperv","Gardenscape","CrownLight", "LandUse")
+oVars_o <- ordVars #so you can do pairwise comparisons
+
+for(o in 1:length(ordVars)){
+  #pick starting variable
+  o1 <- ordVars[o]
+  oVars_o <- oVars_o[oVars_o != o1] #the other ones left
+  
+  #if none left
+  if(length(oVars_o) == 0){
+    print("Done with all pairwise comparisons!")
+    next
+  } 
+  
+  #for each remaining combination
+  for (p in 1:length(oVars_o)){
+    o2 <- oVars_o[p]
+    
+    pol <- polychor(TreeLvlCombined_mod[,c(o1)],TreeLvlCombined_mod[,c(o2)])
+    print(paste("The polychoric correlation for", o1, "and", o2, "is:", pol))
+  }
+  
+}
+
+# [1] "The polychoric correlation for PercentImperv and Gardenscape is: 0.0312264641687608"
+# [1] "The polychoric correlation for PercentImperv and CrownLight is: -0.115029018440944"
+# [1] "The polychoric correlation for PercentImperv and LandUse is: 0.0244584005182064"
+# [1] "The polychoric correlation for Gardenscape and CrownLight is: -0.111718549227959"
+# [1] "The polychoric correlation for Gardenscape and LandUse is: -0.0983578365799617"
+# [1] "The polychoric correlation for CrownLight and LandUse is: -0.0327372843075162"
+
+#nominal
+nomVars <- c("Segment", "SppGroup","Mulch","SiteType")
+oVars_n <- nomVars #so you can do pairwise comparisons
+
+for(n in 1:length(nomVars)){
+  #pick starting variable
+  n1 <- nomVars[n]
+  oVars_n <- oVars_n[oVars_n != n1] #the other ones left
+  
+  #if none left
+  if(length(oVars_n) == 0){
+    print("Done with all pairwise comparisons!")
+    next
+  } 
+  
+  #for each remaining combination
+  for (m in 1:length(oVars_n)){
+    n2 <- oVars_n[m]
+    tb_n <- table(TreeLvlCombined_mod[,c(n1,n2)])
+    
+    cramV <- cramerV(tb_n)
+    
+    print(paste("Cramer's V for", n1, "and", n2, "is:", cramV))
+  }
+  
+}
+
+# [1] "Cramer's V for Segment and SppGroup is: 0.2583"
+# [1] "Cramer's V for Segment and Mulch is: 0.4412"
+# [1] "Cramer's V for Segment and SiteType is: 0.5471"
+# [1] "Cramer's V for SppGroup and Mulch is: 0.1605"
+# [1] "Cramer's V for SppGroup and SiteType is: 0.2154"
+# [1] "Cramer's V for Mulch and SiteType is: 0.07964"
+
+#############################Visuals for the ones we want to interact
+###SppGroup and powerline
+TS_pow <- table(TreeLvlCombined_mod[c("SppGroup", "Powerline")])
+PercTS_pow <- TS_pow/rowSums(TS_pow)
+print(PercTS_pow)
+
+#                           Powerline
+# SppGroup                            0          1
+#   AA_Gleditsia_triacanthos 0.59735974 0.40264026
+#   Acer                     0.82517483 0.17482517
+#   Acer_platanoides         0.78980892 0.21019108
+#   Celtis_occidentalis      0.90410959 0.09589041
+#   Fraxinus spp.            0.80625000 0.19375000
+#   Other_lg                 0.75630252 0.24369748
+#   Other_md                 0.70833333 0.29166667
+#   Other_sm                 0.63492063 0.36507937
+#   Tilia spp.               0.84210526 0.15789474
+#   Ulmus spp.               0.55913978 0.44086022
+
+###Urban App and Site Type
+UA_ST <- table(TreeLvlCombined_mod[c("UrbanApp", "SiteType")])
+PercUA_ST <- UA_ST/rowSums(UA_ST)
+print(PercUA_ST)
+
+#         SiteType
+# UrbanApp      AA_SC      Other         SP
+#        0 0.14092141 0.01355014 0.84552846
+#        1 0.23829787 0.06524823 0.69645390
+
+###Urban App and LandUse
+UA_LU <- table(TreeLvlCombined_mod[c("UrbanApp", "LandUse")])
+PercUA_LU <- UA_LU/rowSums(UA_LU)
+print(PercUA_LU)
+
+#         LandUse
+# UrbanApp      AA_SFR     COMM_Mx        INST         MFR          MP       Other
+#        0 0.517615176 0.081300813 0.006775068 0.355013550 0.017615176 0.021680217
+#        1 0.411347518 0.139007092 0.039716312 0.353191489 0.026950355 0.029787234
+
+##Urban App and Percent Imperv
+UA_PI <- table(TreeLvlCombined_mod[c("UrbanApp", "PercentImperv")])
+PercUA_PI <- UA_PI/rowSums(UA_PI)
+print(PercUA_PI)
+
+#         PercentImperv
+# UrbanApp          1          2          3          4
+#        0 0.02581522 0.05570652 0.23913043 0.67934783
+#        1 0.01862464 0.02005731 0.27793696 0.68338109
+
+##Site Type and Perc Imperv
+ST_PI <- table(TreeLvlCombined_mod[c("SiteType", "PercentImperv")])
+PercST_PI <- ST_PI/rowSums(ST_PI)
+print(PercST_PI)
+
+#         PercentImperv
+# SiteType           1           2           3           4
+#    AA_SC 0.003663004 0.003663004 0.120879121 0.871794872
+#    Other 0.000000000 0.160000000 0.180000000 0.660000000
+#    SP    0.027877698 0.041366906 0.294964029 0.635791367
+
+##Site Type and Land Use
+ST_LU <- table(TreeLvlCombined_mod[c("SiteType", "LandUse")])
+PercST_LU <- ST_LU/rowSums(ST_LU)
+print(PercST_LU)
+
+#         LandUse
+# SiteType      AA_SFR     COMM_Mx        INST         MFR          MP       Other
+#    AA_SC 0.161172161 0.285714286 0.091575092 0.388278388 0.000000000 0.073260073
+#    Other 0.071428571 0.000000000 0.000000000 0.785714286 0.107142857 0.035714286
+#    SP    0.560538117 0.071748879 0.007174888 0.323766816 0.023318386 0.013452915
+
+####################SpeciesGroups
+OSppGroups_sm <-TreeLvlCombined_mod[TreeLvlCombined_mod$SppGroup == "Other_sm",]
+totTrees_sm <- length(OSppGroups_sm$Segment)
+
+OSppGroups_md <-TreeLvlCombined_mod[TreeLvlCombined_mod$SppGroup == "Other_md",]
+totTrees_md <- length(OSppGroups_md$Segment)
+
+OSppGroups_lg <-TreeLvlCombined_mod[TreeLvlCombined_mod$SppGroup == "Other_lg",]
+totTrees_lg <- length(OSppGroups_lg$Segment)
+
+##SppGroup - sm x UrbanApp
+PercSGs_UA <- table(OSppGroups_sm$UrbanApp)/totTrees_sm
+print(PercSGs_UA)
+
+#        0        1 
+# 0.953125 0.031250 
+
+PercSGm_UA <- table(OSppGroups_md$UrbanApp)/totTrees_md
+print(PercSGm_UA)
+
+#         0         1 
+# 0.4068966 0.5862069
+
+PercSGl_UA <- table(OSppGroups_lg$UrbanApp)/totTrees_lg
+print(PercSGl_UA)
+
+#         0         1 
+# 0.2833333 0.7083333 
+
+###################Boxplots
+##Basal Area x Mulch (boxplot)
+ggplot(TreeLvlCombined_mod, aes(x = BasalArea, y = Mulch)) +
+  geom_violin() + stat_summary(fun.y=median, geom="point", size=2, color="red") 
+
+#there is a range but the biggest trees have none
+
+##Basal Area x Pruned Correct (boxplot)
+TreeLvlCombined_mod$PrunedCorrect <- as.character(TreeLvlCombined_mod$PrunedCorrect )
+#to be conservative here
+TreeLvlCombined_mod$PrunedCorrect[is.na(TreeLvlCombined_mod$PrunedCorrect )] <- 0
+TreeLvlCombined_mod$PrunedCorrect <- as.factor(TreeLvlCombined_mod$PrunedCorrect)
+
+ggplot(TreeLvlCombined_mod, aes(x = BasalArea, y = PrunedCorrect)) +
+  geom_violin() + stat_summary(fun.y=median, geom="point", size=2, color="red")
+
+ggplot(TreeLvlCombined_mod, aes(y = BasalArea, x = PrunedCorrect, colour = PrunedCorrect)) +
+  geom_boxplot() +
+  geom_jitter()
+
+#pretty similar distributions
 
 ```
+
 ##get model runs
 
 ```{r get model runs}
+
+#can you parallelize this?
 
 ###Set up for gjam run
 TypeNames <- c("OC", "OC", "OC")
@@ -316,22 +555,20 @@ ydata <- TreeLvlCombined_mod[,c("Defoliation", "Discoloration", "Dieback")]
 mlsimp <- list(ng = 20000, burnin = 5000, typeNames = TypeNames, random="TreeName")
 
 #function
-fmcomplex = ~ Segment + Year + BasalArea*SppGroup + Powerline + PercentImperv + Mulch + Gardenscape + PrunedCorrect + CrownLight + UrbanApp*SiteType + LandUse
+fmcomplex = ~ Segment + Year + BasalArea*SppGroup + Powerline + Mulch + Gardenscape + PrunedCorrect + CrownLight + UrbanApp*SiteType + LandUse + PercentImperv
 
 #get x data
-xdataCom <- TreeLvlCombined_mod[,c("TreeName", "Segment", "Year", "BasalArea", "SppGroup","Mulch", "PercentImperv",   "TreeSize", "Powerline", "SiteType", "Gardenscape","PrunedCorrect", "CrownLight", "UrbanApp", "LandUse")]
+xdataCom <- TreeLvlCombined_mod[,c("TreeName", "Segment", "Year", "BasalArea", "SppGroup","Mulch", "Powerline", "SiteType", "Gardenscape","PrunedCorrect", "CrownLight", "UrbanApp", "LandUse", "PercentImperv")]
 xdataCom$BasalArea <- scale(xdataCom$BasalArea) #maybe log transform instead?
 
 #run gjam model
-
 out3var <- gjam(fmcomplex, xdataCom, ydata, modelList = mlsimp)
 
 # ppars <- list(SAVEPLOTS=T)
 # gjamPlot(out3var, plotPars=ppars)
-#saveRDS(out3var, "ChicagoTrees_3var_full041724.rds")
+#saveRDS(out3var, "ChicagoTrees_3var_m1.rds")
 
 ###############Deal with VIF issues
-mlsimp <- list(ng = 10000, burnin = 5000, typeNames = TypeNames, random="TreeName")
 
 
 
