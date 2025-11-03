@@ -159,7 +159,7 @@ TreeLvlCombined_mod$Year <- as.factor(TreeLvlCombined_mod$Year)
 #tree size
 #group the tree size variable
 thresh1 <- 35 #should check if this is a reasonable grouping
-thresh2 <- 60
+thresh2 <- 50
 ts_initial <- TreeLvlCombined_mod$TreeSize
 TreeLvlCombined_mod$TreeSize[ts_initial <= thresh1] <- "Small"
 TreeLvlCombined_mod$TreeSize[ts_initial > thresh1 & ts_initial <= thresh2] <- "Medium"
@@ -345,6 +345,9 @@ for(b in 1:length(binVars)){
   
 }
 
+# [1] "The tetrachoric rho for Powerline and UrbanApp is: 0.0592494353472277"
+# [1] "The tetrachoric rho for Powerline and PrunedCorrect is: -0.19435798624459"
+# [1] "The tetrachoric rho for UrbanApp and PrunedCorrect is: 0.0301311231189234"
 
 #ordinal
 ordVars <- c("PercentImperv","Gardenscape","CrownLight", "LandUse")
@@ -370,6 +373,13 @@ for(o in 1:length(ordVars)){
   }
   
 }
+
+# [1] "The polychoric correlation for PercentImperv and Gardenscape is: 0.188386321135574"
+# [1] "The polychoric correlation for PercentImperv and CrownLight is: -0.0697206773607146"
+# [1] "The polychoric correlation for PercentImperv and LandUse is: 0.237634179022527"
+# [1] "The polychoric correlation for Gardenscape and CrownLight is: -0.128329845536602"
+# [1] "The polychoric correlation for Gardenscape and LandUse is: -0.192511290382918"
+# [1] "The polychoric correlation for CrownLight and LandUse is: 0.259365784830132"
 
 #nominal
 nomVars <- c("Segment", "SppGroup","Mulch","SiteType")
@@ -398,6 +408,12 @@ for(n in 1:length(nomVars)){
   
 }
 
+# [1] "Cramer's V for Segment and SppGroup is: 0.4911"
+# [1] "Cramer's V for Segment and Mulch is: 0.542"
+# [1] "Cramer's V for Segment and SiteType is: 0.6522"
+# [1] "Cramer's V for SppGroup and Mulch is: 0.4926"
+# [1] "Cramer's V for SppGroup and SiteType is: 0.3872"
+# [1] "Cramer's V for Mulch and SiteType is: 0.4585"
 
 #############################Visuals for the ones we want to interact
 ###SppGroup and powerline
@@ -405,11 +421,29 @@ TS_pow <- table(TreeLvlCombined_mod[c("SppGroup", "Powerline")])
 PercTS_pow <- TS_pow/rowSums(TS_pow)
 print(PercTS_pow)
 
+#                    Powerline
+# SppGroup                 FALSE       TRUE
+#   Acer              0.72340426 0.27659574
+#   Acer_rubrum       0.92537313 0.07462687
+#   Cercis_canadensis 0.93103448 0.06896552
+#   Lagerstroemia_spp 0.80722892 0.19277108
+#   Other_lg          0.97058824 0.02941176
+#   Other_md          0.71153846 0.28846154
+#   Other_sm          0.66115702 0.33884298
+#   Prunus_spp        0.91836735 0.08163265
+#   Quercus           0.70000000 0.30000000
+#   Quercus_phellos   0.69767442 0.30232558
+#   Ulmus_americana   0.60416667 0.39583333
 
 ###Urban App and Site Type
 UA_ST <- table(TreeLvlCombined_mod[c("UrbanApp", "SiteType")])
 PercUA_ST <- UA_ST/rowSums(UA_ST)
 print(PercUA_ST)
+
+#         SiteType
+# UrbanApp AA_Hardscape          M         OM         SP       Yard
+#        0   0.11740891 0.09919028 0.14777328 0.42510121 0.21052632
+#        1   0.15000000 0.05769231 0.06153846 0.45000000 0.28076923
 
 
 ###Urban App and LandUse
@@ -417,23 +451,46 @@ UA_LU <- table(TreeLvlCombined_mod[c("UrbanApp", "LandUse")])
 PercUA_LU <- UA_LU/rowSums(UA_LU)
 print(PercUA_LU)
 
-
+#         LandUse
+# UrbanApp      AA_Res     COMM_Mx        INST       NAT_V       Other
+#        0 0.574898785 0.176113360 0.135627530 0.052631579 0.060728745
+#        1 0.465384615 0.296153846 0.219230769 0.015384615 0.003846154
+       
 ##Urban App and Percent Imperv
 UA_PI <- table(TreeLvlCombined_mod[c("UrbanApp", "PercentImperv")])
 PercUA_PI <- UA_PI/rowSums(UA_PI)
 print(PercUA_PI)
 
+#         PercentImperv
+# UrbanApp         1         2         3         4
+#        0 0.2662602 0.3292683 0.2256098 0.1788618
+#        1 0.3359073 0.1467181 0.2239382 0.2934363
 
 ##Site Type and Perc Imperv
 ST_PI <- table(TreeLvlCombined_mod[c("SiteType", "PercentImperv")])
 PercST_PI <- ST_PI/rowSums(ST_PI)
 print(PercST_PI)
 
+#               PercentImperv
+# SiteType                1          2          3          4
+#   AA_Hardscape 0.22916667 0.11458333 0.02083333 0.63541667
+#   M            0.28125000 0.01562500 0.70312500 0.00000000
+#   OM           0.14606742 0.71910112 0.04494382 0.08988764
+#   SP           0.31595092 0.17177914 0.25153374 0.26073620
+#   Yard         0.35227273 0.38636364 0.20454545 0.05681818
 
 ##Site Type and Land Use
 ST_LU <- table(TreeLvlCombined_mod[c("SiteType", "LandUse")])
 PercST_LU <- ST_LU/rowSums(ST_LU)
 print(PercST_LU)
+
+#               LandUse
+# SiteType            AA_Res     COMM_Mx        INST       NAT_V       Other
+#   AA_Hardscape 0.360824742 0.515463918 0.103092784 0.020618557 0.000000000
+#   M            0.859375000 0.140625000 0.000000000 0.000000000 0.000000000
+#   OM           0.000000000 0.550561798 0.134831461 0.044943820 0.269662921
+#   SP           0.467889908 0.171253823 0.308868502 0.036697248 0.015290520
+#   Yard         0.915254237 0.000000000 0.005649718 0.067796610 0.011299435
 
 ####################SpeciesGroups
 OSppGroups_sm <-TreeLvlCombined_mod[TreeLvlCombined_mod$SppGroup == "Other_sm",]
@@ -449,21 +506,27 @@ totTrees_lg <- length(OSppGroups_lg$Segment)
 PercSGs_UA <- table(OSppGroups_sm$UrbanApp)/totTrees_sm
 print(PercSGs_UA)
 
+#         0         1 
+# 0.6280992 0.3719008 
 
 PercSGm_UA <- table(OSppGroups_md$UrbanApp)/totTrees_md
 print(PercSGm_UA)
 
+#         0         1 
+# 0.6153846 0.3846154 
 
 PercSGl_UA <- table(OSppGroups_lg$UrbanApp)/totTrees_lg
 print(PercSGl_UA)
 
+#         0         1 
+# 0.3455882 0.6544118 
 
 ###################Boxplots
 ##Basal Area x Mulch (boxplot)
 ggplot(TreeLvlCombined_mod, aes(x = BasalArea, y = Mulch)) +
   geom_violin() + stat_summary(fun.y=median, geom="point", size=2, color="red") 
 
-#there is a range but the biggest trees have none
+#there is a range but the biggest trees have none and the mulch volcanoes are only on small trees
 
 ##Basal Area x Pruned Correct (boxplot)
 TreeLvlCombined_mod$PrunedCorrect <- as.character(TreeLvlCombined_mod$PrunedCorrect )
@@ -497,10 +560,10 @@ ydata <- TreeLvlCombined_mod[!is.na(TreeLvlCombined_mod$Gardenscape),c("Defoliat
 mlsimp <- list(ng = 10000, burnin = 5000, typeNames = TypeNames, random="TreeName")
 
 #function
-fmcomplex = ~ SegmentMod + Year + BasalArea*GenusGroup + Powerline + PercentImperv + Mulch + Gardenscape + PrunedCorrect + CrownLight + UrbanApp*SiteType + LandUse
+fmcomplex = ~ SegmentMod + Year + BasalArea*SppGroup + Powerline + PercentImperv + Mulch + Gardenscape + PrunedCorrect + CrownLight + UrbanApp*SiteType + LandUse
 
 #get x data
-xdataCom <- TreeLvlCombined_mod[,c("TreeName", "SegmentMod", "Year", "BasalArea", "GenusGroup","CorrMulch", "PercentImperv","Powerline", "SiteType", "Gardenscape","PrunedCorrect", "CrownLight", "UrbanApp", "LandUse")]
+xdataCom <- TreeLvlCombined_mod[,c("TreeName", "SegmentMod", "Year", "BasalArea", "SppGroup","Mulch", "PercentImperv","Powerline", "SiteType", "Gardenscape","PrunedCorrect", "CrownLight", "UrbanApp", "LandUse")]
 xdataCom$BasalArea <- scale(xdataCom$BasalArea)
 xdataCom <- xdataCom[!is.na(xdataCom$Gardenscape),]
 
@@ -508,8 +571,8 @@ xdataCom <- xdataCom[!is.na(xdataCom$Gardenscape),]
 out3varST <- gjam(fmcomplex, xdataCom, ydata, modelList = mlsimp)
 
 ############To save
-# ppars <- list(SAVEPLOTS=T)
-# gjamPlot(out3varST, plotPars=ppars)
+#ppars <- list(SAVEPLOTS=T)
+#gjamPlot(out3varST, plotPars=ppars)
 
 ####Get sensitivity values
 # sensitivity <- as.data.frame(matrix(0, ncol=4,nrow=length(outMcomplexST$parameters$beta$Estimate)))

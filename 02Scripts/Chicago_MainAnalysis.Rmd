@@ -128,7 +128,7 @@ Goal here is to do some simplification because we don't have the sample size to 
 TreeLvlCombined_mod <- TreeLvlCombined
 
 #Get rid of trees without local site conditions
-TreeLvlCombined_mod <- TreeLvlCombined_mod[!is.na(TreeLvlCombined_mod$Gardenscape),]
+TreeLvlCombined_mod <- TreeLvlCombined_mod[!is.na(TreeLvlCombined_mod$Gardenscape),] #eliminates 26 obs
 
 #defoliation
 TreeLvlCombined_mod$Defoliation[TreeLvlCombined_mod$Defoliation > 3] <- 3
@@ -165,13 +165,15 @@ TreeLvlCombined_mod$Year <- as.factor(TreeLvlCombined_mod$Year)
 TreeLvlCombined_mod$BasalArea <- sapply(TreeLvlCombined_mod$TotalDBH, basalArea)
 TreeLvlCombined_mod <- TreeLvlCombined_mod[!is.na(TreeLvlCombined_mod$BasalArea),]
 
+TreeLvlCombined_mod <- TreeLvlCombined_mod[!(TreeLvlCombined_mod$GenSpe == "_unknown"),]
 #group the tree size variable
 thresh1 <- 35 #should check if this is a reasonable grouping
-thresh2 <- 60
+thresh2 <- 50
 ts_initial <- TreeLvlCombined_mod$TreeSize
 TreeLvlCombined_mod$TreeSize[ts_initial <= thresh1] <- "Small"
 TreeLvlCombined_mod$TreeSize[ts_initial > thresh1 & ts_initial <= thresh2] <- "Medium"
 TreeLvlCombined_mod$TreeSize[ts_initial > thresh2] <- "Large"
+
 TreeLvlCombined_mod$TreeSize  <- as.factor( TreeLvlCombined_mod$TreeSize )
 
 #urban appropriate
@@ -199,7 +201,7 @@ TreeLvlCombined_mod$PercentImperv[TreeLvlCombined_mod$PercentImperv ==3] <- 2 #2
 TreeLvlCombined_mod$PercentImperv[TreeLvlCombined_mod$PercentImperv ==4] <- 3 #51-75
 TreeLvlCombined_mod$PercentImperv[TreeLvlCombined_mod$PercentImperv ==5] <- 4 #76-100
 
-TreeLvlCombined_mod <- TreeLvlCombined_mod[!is.na(TreeLvlCombined_mod$PercentImperv),]
+TreeLvlCombined_mod <- TreeLvlCombined_mod[!is.na(TreeLvlCombined_mod$PercentImperv),] #gets rid of 35, 26 of which are also removed with gardenscape
 TreeLvlCombined_mod$PercentImperv <- as.factor(TreeLvlCombined_mod$PercentImperv)
 
 ######Site type
@@ -215,7 +217,7 @@ TreeLvlCombined_mod$SiteType <- as.factor(TreeLvlCombined_mod$SiteType)
 TreeLvlCombined_mod$CrownLight <- as.numeric(TreeLvlCombined_mod$CrownLight)
 TreeLvlCombined_mod$CrownLight <- round(TreeLvlCombined_mod$CrownLight)
 TreeLvlCombined_mod$CrownLight[TreeLvlCombined_mod$CrownLight == 0] <- 1
-TreeLvlCombined_mod$CrownLight[is.na(TreeLvlCombined_mod$CrownLight)] <- 3 #just give it a moderate value
+#TreeLvlCombined_mod$CrownLight[is.na(TreeLvlCombined_mod$CrownLight)] <- 3 #just give it a moderate value
 TreeLvlCombined_mod$CrownLight <- as.factor(TreeLvlCombined_mod$CrownLight)
 
 #####powerlines
@@ -269,7 +271,7 @@ TreeLvlCombined_mod$Mulch <- as.factor(TreeLvlCombined_mod$Mulch)
 
 #fix spelling errors and collapse uncertain IDs
 TreeLvlCombined_mod$GenSpe[TreeLvlCombined_mod$Genus == "Fraxinus"] <- "Fraxinus spp."
-TreeLvlCombined_mod$GenSpe[(TreeLvlCombined_mod$GenSpe == "Tilia_cordata") | (TreeLvlCombined_mod$GenSpe == "Tilia_americana")] <- "Tilia spp." #small sample size and some cultivars
+TreeLvlCombined_mod$GenSpe[(TreeLvlCombined_mod$GenSpe == "Tilia_cordata") | (TreeLvlCombined_mod$GenSpe == "Tilia_americana") | TreeLvlCombined_mod$GenSpe == "Tilia_tomentosa"] <- "Tilia spp." #small sample size and some cultivars
 TreeLvlCombined_mod$GenSpe[TreeLvlCombined_mod$GenSpe == "Ulmus_americana"] <- "Ulmus spp." #unsure IDs
 TreeLvlCombined_mod$GenSpe[TreeLvlCombined_mod$GenSpe == "Ulmus_pumila"| TreeLvlCombined_mod$GenSpe == "Ulmus_unknown" | TreeLvlCombined_mod$GenSpe == "Ulmus_spp."] <- "Ulmus spp." #unsure IDs
 
@@ -296,7 +298,7 @@ TreeLvlCombined_mod$SppGroup[TreeLvlCombined_mod$Genus %in% names(CommonGenus)]<
 TreeLvlCombined_mod$SppGroup[TreeLvlCombined_mod$GenSpe %in% names(CommonSpp)] <- TreeLvlCombined_mod$GenSpe[TreeLvlCombined_mod$GenSpe %in% names(CommonSpp)] #common species
 #choose baseline species - most common species we saw: Gleditsia triacanthos
 TreeLvlCombined_mod$SppGroup[TreeLvlCombined_mod$SppGroup == "Gleditsia_triacanthos"] <- "AA_Gleditsia_triacanthos"
-TreeLvlCombined_mod <- TreeLvlCombined_mod[!is.na(TreeLvlCombined_mod$SppGroup),]
+TreeLvlCombined_mod <- TreeLvlCombined_mod[!is.na(TreeLvlCombined_mod$SppGroup),] #only gets rid of one
 TreeLvlCombined_mod$SppGroup <- as.factor(TreeLvlCombined_mod$SppGroup) #for model
 
 ```
@@ -408,12 +410,12 @@ for(n in 1:length(nomVars)){
   
 }
 
-# [1] "Cramer's V for Segment and SppGroup is: 0.2583"
-# [1] "Cramer's V for Segment and Mulch is: 0.4412"
-# [1] "Cramer's V for Segment and SiteType is: 0.5471"
-# [1] "Cramer's V for SppGroup and Mulch is: 0.1605"
-# [1] "Cramer's V for SppGroup and SiteType is: 0.2154"
-# [1] "Cramer's V for Mulch and SiteType is: 0.07964"
+# [1] "Cramer's V for Segment and SppGroup is: 0.2939"
+# [1] "Cramer's V for Segment and Mulch is: 0.4172"
+# [1] "Cramer's V for Segment and SiteType is: 0.3559"
+# [1] "Cramer's V for SppGroup and Mulch is: 0.1726"
+# [1] "Cramer's V for SppGroup and SiteType is: 0.1682"
+# [1] "Cramer's V for Mulch and SiteType is: 0.0912"
 
 #############################Visuals for the ones we want to interact
 ###SppGroup and powerline
@@ -564,13 +566,15 @@ xdataCom$BasalArea <- scale(xdataCom$BasalArea) #maybe log transform instead?
 #run gjam model
 out3var <- gjam(fmcomplex, xdataCom, ydata, modelList = mlsimp)
 
-# ppars <- list(SAVEPLOTS=T)
-# gjamPlot(out3var, plotPars=ppars)
-#saveRDS(out3var, "ChicagoTrees_3var_m1.rds")
+ppars <- list(SAVEPLOTS=T)
+gjamPlot(out3var, plotPars=ppars)
+saveRDS(out3var, "ChicagoTrees_3var_m1.rds")
 
-###############Deal with VIF issues
+###############compare DIC with version with log-transformed Basal area instead of scaled
+xdataCom <- TreeLvlCombined_mod[,c("TreeName", "Segment", "Year", "BasalArea", "SppGroup","Mulch", "Powerline", "SiteType", "Gardenscape","PrunedCorrect", "CrownLight", "UrbanApp", "LandUse", "PercentImperv")]
+xdataCom$BasalArea <- log(xdataCom$BasalArea)
 
-
+out3var <- gjam(fmcomplex, xdataCom, ydata, modelList = mlsimp)
 
 ```
 
@@ -597,17 +601,7 @@ fmcomplexCV <- y ~ Segment + Year + BasalArea*GenusGroup + Powerline+ Mulch + Ga
 
 outMcomplex <- or( formula = fmcomplexCV, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 1000 )
 
-####Get sensitivity values
-sensitivity <- as.data.frame(matrix(0, ncol=4,nrow=length(outMcomplex$parameters$beta$Estimate)))
-names(sensitivity) <- c("Variable", "Beta_est", "Sigma", "Sensitivity")
-sensitivity$Beta_est <- outMcomplex$parameters$beta$Estimate
-sensitivity$Variable <- rownames(outMcomplex$parameters$beta)
 
-##how to get the residual variance
-SS <- sumSquares(outMcomplex$prediction[,1], outMcomplex$inputs$data$y)
-sensitivity$Sigma <- rep((SS/(length(outMcomplex$inputs$data$y) - 2)), length(sensitivity$Variable))
-
-sensitivity$Sensitivity <- abs(sensitivity$Beta_est/sqrt(sensitivity$Sigma))
 
 ####get rid of things based on sensitivity
 
