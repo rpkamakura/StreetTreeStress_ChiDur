@@ -561,14 +561,14 @@ fmcomplex = ~ Segment + Year + BasalArea*SppGroup + Powerline + Mulch + Gardensc
 
 #get x data
 xdataCom <- TreeLvlCombined_mod[,c("TreeName", "Segment", "Year", "BasalArea", "SppGroup","Mulch", "Powerline", "SiteType", "Gardenscape","PrunedCorrect", "CrownLight", "UrbanApp", "LandUse", "PercentImperv")]
-xdataCom$BasalArea <- scale(xdataCom$BasalArea) #maybe log transform instead?
+xdataCom$BasalArea <- log(xdataCom$BasalArea) #maybe log transform instead?
 
 #run gjam model
-out3var <- gjam(fmcomplex, xdataCom, ydata, modelList = mlsimp)
+out3varLG <- gjam(fmcomplex, xdataCom, ydata, modelList = mlsimp)
 
 ppars <- list(SAVEPLOTS=T)
 gjamPlot(out3var, plotPars=ppars)
-saveRDS(out3var, "ChicagoTrees_3var_m1.rds")
+saveRDS(out3var, "ChicagoTrees_3var_m1_log.rds")
 
 ###############compare DIC with version with log-transformed Basal area instead of scaled
 xdataCom <- TreeLvlCombined_mod[,c("TreeName", "Segment", "Year", "BasalArea", "SppGroup","Mulch", "Powerline", "SiteType", "Gardenscape","PrunedCorrect", "CrownLight", "UrbanApp", "LandUse", "PercentImperv")]

@@ -17,6 +17,9 @@ library(dplyr)
 ##Visuals
 library(ggplot2)
 
+#rhat values
+library(rstan)
+
 #for crown stress model
 #make sure you have r tools installed
 #install.packages( "./ordReg_1.0.tar.gz", repos=NULL, type="source" )
@@ -568,23 +571,66 @@ xdataCom$BasalArea <- scale(xdataCom$BasalArea)
 xdataCom <- xdataCom[!is.na(xdataCom$Gardenscape),]
 
 #run gjam model
-out3varST <- gjam(fmcomplex, xdataCom, ydata, modelList = mlsimp)
+out3varLg <- gjam(fmcomplex, xdataCom, ydata, modelList = mlsimp) #DIC - 24192.29
+
+#the rescaled version has lower DIC, but the data are skewed so arguably log makes more sense
 
 ############To save
-#ppars <- list(SAVEPLOTS=T)
-#gjamPlot(out3varST, plotPars=ppars)
+saveRDS(out3varLg, "../03ModelOutputs/Durham/DurhamTrees_3var_m1_log.rds")
 
-####Get sensitivity values
-# sensitivity <- as.data.frame(matrix(0, ncol=4,nrow=length(outMcomplexST$parameters$beta$Estimate)))
-# names(sensitivity) <- c("Variable", "Beta_est", "Sigma", "Sensitivity")
-# sensitivity$Beta_est <- outMcomplexST$parameters$beta$Estimate
-# sensitivity$Variable <- rownames(outMcomplexST$parameters$beta)
-# 
-# ##how to get the residual variance
-# SS <- sumSquares(outMcomplexST$prediction[,1], outMcomplexST$inputs$data$y)
-# sensitivity$Sigma <- rep((SS/(length(outMcomplexST$inputs$data$y) - 2)), length(sensitivity$Variable))
-# 
-# sensitivity$Sensitivity <- abs(sensitivity$Beta_est/sqrt(sensitivity$Sigma))
+##Ones with high VIF (>5):
+out3varLg$inputs$designTable
+#Segment: M22, O18, O19, O21, Other, P21, Q21, R21, R24, X16
+#Crown light: 3, 4, 5
+#Site Type: M, Yard
+#Land Use: CommMx
+
+#Sensitivity
+ppars <- list(SAVEPLOTS=T)
+gjamPlot(out3varLg, plotPars=ppars)
+
+#lowest sensitivities are:
+# Percent impervious
+# Crown light
+# Year
+# Powerline
+
+```
+
+```{r model adjustments}
+##should work for all of these, and you just use the columns you need
+#get x data
+xdataCom <- TreeLvlCombined_mod[,c("TreeName", "SegmentMod", "Year", "BasalArea", "SppGroup","Mulch", "PercentImperv","Powerline", "SiteType", "Gardenscape","PrunedCorrect", "UrbanApp", "LandUse")]
+xdataCom$BasalArea <- log(xdataCom$BasalArea)
+xdataCom <- xdataCom[!is.na(xdataCom$Gardenscape),]
+
+
+##remove crown light exposure - for both sensitivity and VIF
+#function
+fm = ~ SegmentMod + Year + BasalArea*SppGroup + Powerline + PercentImperv + Mulch + Gardenscape + PrunedCorrect + UrbanApp*SiteType + LandUse
+
+out3varLg.2 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
+
+############To save
+saveRDS(out3varLg.2, "../03ModelOutputs/Durham/DurhamTrees_3var_m2_log.rds") #DIC 23999.16
+
+##VIF
+#some segments are still too high
+#land use CommMx is 5.92
+#yard is 5.27
+
+#####Sensitivity
+gjamPlot(out3varLg.2, plotPars=ppars)
+
+#lowest is pruned correct and percent imperv 2, then powerline
+
+##try now without pruned correct
+fm = ~ SegmentMod + Year + BasalArea*SppGroup + Powerline + PercentImperv + Mulch + Gardenscape + UrbanApp*SiteType + LandUse
+
+out3varLg.3 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
+
+saveRDS(out3varLg.3, "../03ModelOutputs/Durham/DurhamTrees_3var_m3_log.rds")
+        
 ```
 
 
