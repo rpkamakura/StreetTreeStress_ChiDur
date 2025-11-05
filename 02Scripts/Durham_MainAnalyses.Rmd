@@ -629,7 +629,31 @@ fm = ~ SegmentMod + Year + BasalArea*SppGroup + Powerline + PercentImperv + Mulc
 
 out3varLg.3 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
 
-saveRDS(out3varLg.3, "../03ModelOutputs/Durham/DurhamTrees_3var_m3_log.rds")
+saveRDS(out3varLg.3, "../03ModelOutputs/Durham/DurhamTrees_3var_m3_log.rds") #DIC 23842.61
+
+gjamPlot(out3varLg.3, plotPars=ppars)
+
+#try without site type
+fm = ~ SegmentMod + Year + BasalArea*SppGroup + Powerline + PercentImperv + Mulch + Gardenscape + UrbanApp + LandUse
+out3varLg.4 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
+saveRDS(out3varLg.4, "../03ModelOutputs/Durham/DurhamTrees_3var_m4_log.rds") #DIC 24082.03
+
+#try instead without percent impervious
+fm = ~ SegmentMod + Year + BasalArea*SppGroup + Powerline+ Mulch + Gardenscape + UrbanApp*SiteType + LandUse
+out3varLg.5 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
+saveRDS(out3varLg.5, "../03ModelOutputs/Durham/DurhamTrees_3var_m5_log.rds") #DIC 23876.01
+#land use CommMx still has a VIF of 5.65
+#some of the segments are still way too high - can we do some grouping?
+
+gjamPlot(out3varLg.5, plotPars=ppars)
+#lowest by sensitivity is mulch, powerline, and year
+
+#okay try instead without powerlines (modifying model 3)
+fm = ~ SegmentMod + Year + BasalArea*SppGroup + PercentImperv + Mulch + Gardenscape + UrbanApp*SiteType + LandUse
+out3varLg.6 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
+saveRDS(out3varLg.6, "../03ModelOutputs/Durham/DurhamTrees_3var_m6_log.rds") #DIC 23971.26
+
+
         
 ```
 

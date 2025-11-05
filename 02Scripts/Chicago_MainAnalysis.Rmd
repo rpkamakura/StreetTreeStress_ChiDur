@@ -561,21 +561,48 @@ fmcomplex = ~ Segment + Year + BasalArea*SppGroup + Powerline + Mulch + Gardensc
 
 #get x data
 xdataCom <- TreeLvlCombined_mod[,c("TreeName", "Segment", "Year", "BasalArea", "SppGroup","Mulch", "Powerline", "SiteType", "Gardenscape","PrunedCorrect", "CrownLight", "UrbanApp", "LandUse", "PercentImperv")]
-xdataCom$BasalArea <- log(xdataCom$BasalArea) #maybe log transform instead?
-
-#run gjam model
-out3varLG <- gjam(fmcomplex, xdataCom, ydata, modelList = mlsimp)
-
-ppars <- list(SAVEPLOTS=T)
-gjamPlot(out3var, plotPars=ppars)
-saveRDS(out3var, "ChicagoTrees_3var_m1_log.rds")
-
-###############compare DIC with version with log-transformed Basal area instead of scaled
-xdataCom <- TreeLvlCombined_mod[,c("TreeName", "Segment", "Year", "BasalArea", "SppGroup","Mulch", "Powerline", "SiteType", "Gardenscape","PrunedCorrect", "CrownLight", "UrbanApp", "LandUse", "PercentImperv")]
 xdataCom$BasalArea <- log(xdataCom$BasalArea)
 
-out3var <- gjam(fmcomplex, xdataCom, ydata, modelList = mlsimp)
+#run gjam model
+out3varLG <- gjam(fmcomplex, xdataCom, ydata, modelList = mlsimp) # DIC 42584.18 (higher than just rescaled, but makes more sense)
 
+ppars <- list(SAVEPLOTS=T)
+gjamPlot(out3varLG, plotPars=ppars)
+saveRDS(out3varLG, "../03ModelOutputs/Chicago/ChicagoTrees_3var_m1_log.rds")
+
+#From VIF
+#crown light 4 is above 5, percent impervious 3 and 4 are waaay too high (10+)
+
+#from sensitivity
+#powerline is lowest, then pruned correct
+```
+
+```{r model adjustments}
+#get rid of high VIF - get rid of percent imperv
+xdataCom <- TreeLvlCombined_mod[,c("TreeName", "Segment", "Year", "BasalArea", "SppGroup","Mulch", "Powerline", "SiteType", "Gardenscape","PrunedCorrect", "CrownLight", "UrbanApp", "LandUse")]
+xdataCom$BasalArea <- log(xdataCom$BasalArea)
+
+fm = ~ Segment + Year + BasalArea*SppGroup + Powerline + Mulch + Gardenscape + PrunedCorrect + CrownLight + UrbanApp*SiteType + LandUse
+
+#run gjam model
+out3varLG.2 <- gjam(fm, xdataCom, ydata, modelList = mlsimp) # DIC 42307.09
+saveRDS(out3varLG.2, "../03ModelOutputs/Chicago/ChicagoTrees_3var_m2_log.rds")
+
+# from VIF crown light is still too high so going to remove it too
+fm = ~ Segment + Year + BasalArea*SppGroup + Powerline + Mulch + Gardenscape + PrunedCorrect + UrbanApp*SiteType + LandUse
+#run gjam model
+out3varLG.3 <- gjam(fm, xdataCom, ydata, modelList = mlsimp) # DIC 42118.89
+saveRDS(out3varLG.3, "../03ModelOutputs/Chicago/ChicagoTrees_3var_m3_log.rds")
+#VIF now looks good
+gjamPlot(out3varLG.3, plotPars=ppars)
+
+#from sensitivity, look at removing powerline, pruned correct
+
+#try now without pruned correct
+fm = ~ Segment + Year + BasalArea*SppGroup + Powerline + Mulch + Gardenscape + UrbanApp*SiteType + LandUse
+#run gjam model
+out3varLG.4 <- gjam(fm, xdataCom, ydata, modelList = mlsimp) # DIC 42118.89
+saveRDS(out3varLG.4, "../03ModelOutputs/Chicago/ChicagoTrees_3var_m4_log.rds")
 ```
 
 
