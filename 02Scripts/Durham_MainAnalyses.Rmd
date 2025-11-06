@@ -653,6 +653,17 @@ fm = ~ SegmentMod + Year + BasalArea*SppGroup + PercentImperv + Mulch + Gardensc
 out3varLg.6 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
 saveRDS(out3varLg.6, "../03ModelOutputs/Durham/DurhamTrees_3var_m6_log.rds") #DIC 23971.26
 
+#try instead without mulch (modifying model 3)
+fm = ~ SegmentMod + Year + BasalArea*SppGroup + Powerline + PercentImperv + Gardenscape + UrbanApp*SiteType + LandUse
+out3varLg.7 <- gjam(fm, xdataCom, ydata, modelList = mlsimp) #23962.35
+saveRDS(out3varLg.7, "../03ModelOutputs/Durham/DurhamTrees_3var_m7_log.rds") #DIC 
+gjamPlot(out3varLg.7, plotPars=ppars)
+
+#okay try without land use for VIF, despite how important it should be... modifying model 3
+fm = ~ SegmentMod + Year + BasalArea*SppGroup + Powerline + PercentImperv + Mulch + Gardenscape + UrbanApp*SiteType
+out3varLg.8 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
+saveRDS(out3varLg.8, "../03ModelOutputs/Durham/DurhamTrees_3var_m8_log.rds") #DIC
+
 
         
 ```

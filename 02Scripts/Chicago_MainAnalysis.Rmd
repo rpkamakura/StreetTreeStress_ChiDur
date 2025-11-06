@@ -601,8 +601,14 @@ gjamPlot(out3varLG.3, plotPars=ppars)
 #try now without pruned correct
 fm = ~ Segment + Year + BasalArea*SppGroup + Powerline + Mulch + Gardenscape + UrbanApp*SiteType + LandUse
 #run gjam model
-out3varLG.4 <- gjam(fm, xdataCom, ydata, modelList = mlsimp) # DIC 42118.89
+out3varLG.4 <- gjam(fm, xdataCom, ydata, modelList = mlsimp) # DIC 42482.05
 saveRDS(out3varLG.4, "../03ModelOutputs/Chicago/ChicagoTrees_3var_m4_log.rds")
+
+#okay keep pruned correct and try without powerline
+fm = ~ Segment + Year + BasalArea*SppGroup + Mulch + Gardenscape + PrunedCorrect + UrbanApp*SiteType + LandUse
+#run gjam model
+out3varLG.5 <- gjam(fm, xdataCom, ydata, modelList = mlsimp) # DIC 
+saveRDS(out3varLG.5, "../03ModelOutputs/Chicago/ChicagoTrees_3var_m5_log.rds")
 ```
 
 

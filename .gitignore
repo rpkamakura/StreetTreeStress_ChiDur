@@ -47,3 +47,7 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+03ModelOutputs/Chicago/ChicagoTrees_3var_m1.rds
+03ModelOutputs/Chicago/ChicagoTrees_3var_m1_log.rds
+03ModelOutputs/Chicago/ChicagoTrees_3var_m2_log.rds
+03ModelOutputs/Chicago/ChicagoTrees_3var_m3_log.rds
