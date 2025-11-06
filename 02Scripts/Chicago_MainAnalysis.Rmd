@@ -607,8 +607,25 @@ saveRDS(out3varLG.4, "../03ModelOutputs/Chicago/ChicagoTrees_3var_m4_log.rds")
 #okay keep pruned correct and try without powerline
 fm = ~ Segment + Year + BasalArea*SppGroup + Mulch + Gardenscape + PrunedCorrect + UrbanApp*SiteType + LandUse
 #run gjam model
-out3varLG.5 <- gjam(fm, xdataCom, ydata, modelList = mlsimp) # DIC 
+out3varLG.5 <- gjam(fm, xdataCom, ydata, modelList = mlsimp) # DIC 42458.9
 saveRDS(out3varLG.5, "../03ModelOutputs/Chicago/ChicagoTrees_3var_m5_log.rds")
+
+#keep both and try without gardenscape - modifying model 3
+fm = ~ Segment + Year + BasalArea*SppGroup + Powerline + Mulch + PrunedCorrect + UrbanApp*SiteType + LandUse
+#run gjam model
+out3varLG.6 <- gjam(fm, xdataCom, ydata, modelList = mlsimp) # DIC 42359.97
+saveRDS(out3varLG.6, "../03ModelOutputs/Chicago/ChicagoTrees_3var_m6_log.rds")
+
+##okay so really model 3 seems like the best bet, let's just try without the interactions to confirm
+fm.1 = ~ Segment + Year + BasalArea + SppGroup + Powerline + Mulch + Gardenscape + PrunedCorrect + UrbanApp*SiteType + LandUse
+#run gjam model
+out3varLG.7 <- gjam(fm.1, xdataCom, ydata, modelList = mlsimp) # DIC 
+saveRDS(out3varLG.7, "../03ModelOutputs/Chicago/ChicagoTrees_3var_m7_log.rds")
+
+fm.2 = ~ Segment + Year + BasalArea*SppGroup + Powerline + Mulch + Gardenscape + PrunedCorrect + UrbanApp + SiteType + LandUse
+#run gjam model
+out3varLG.8 <- gjam(fm.2, xdataCom, ydata, modelList = mlsimp) # DIC 
+saveRDS(out3varLG.8, "../03ModelOutputs/Chicago/ChicagoTrees_3var_m8_log.rds")
 ```
 
 

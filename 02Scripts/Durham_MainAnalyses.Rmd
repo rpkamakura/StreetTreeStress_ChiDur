@@ -626,9 +626,7 @@ gjamPlot(out3varLg.2, plotPars=ppars)
 
 ##try now without pruned correct
 fm = ~ SegmentMod + Year + BasalArea*SppGroup + Powerline + PercentImperv + Mulch + Gardenscape + UrbanApp*SiteType + LandUse
-
 out3varLg.3 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
-
 saveRDS(out3varLg.3, "../03ModelOutputs/Durham/DurhamTrees_3var_m3_log.rds") #DIC 23842.61
 
 gjamPlot(out3varLg.3, plotPars=ppars)
@@ -662,9 +660,40 @@ gjamPlot(out3varLg.7, plotPars=ppars)
 #okay try without land use for VIF, despite how important it should be... modifying model 3
 fm = ~ SegmentMod + Year + BasalArea*SppGroup + Powerline + PercentImperv + Mulch + Gardenscape + UrbanApp*SiteType
 out3varLg.8 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
-saveRDS(out3varLg.8, "../03ModelOutputs/Durham/DurhamTrees_3var_m8_log.rds") #DIC
+saveRDS(out3varLg.8, "../03ModelOutputs/Durham/DurhamTrees_3var_m8_log.rds") #DIC 23878.02
 
+#site type and some segments are still too high but the rest seem decent
+#alright just to check it, try without segment... again modifying model 3
+fm = ~ Year + BasalArea*SppGroup + Powerline + PercentImperv + Mulch + Gardenscape + UrbanApp*SiteType + LandUse
+out3varLg.9 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
+saveRDS(out3varLg.9, "../03ModelOutputs/Durham/DurhamTrees_3var_m9_log.rds") #DIC 24120.35
 
+#######Next
+#alright well none of the above has lower DIC than number 3, so going to go with the next lowest and see if we can get lower by dropping other variables
+#modify model 5 based on sensitivity - try without mulch
+fm = ~ SegmentMod + Year + BasalArea*SppGroup + Powerline + Gardenscape + UrbanApp*SiteType + LandUse
+out3varLg.10 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
+saveRDS(out3varLg.10, "../03ModelOutputs/Durham/DurhamTrees_3var_m10_log.rds") #DIC 23988.53
+
+#okay instead try model 5 without powerline
+fm = ~ SegmentMod + Year + BasalArea*SppGroup + Mulch + Gardenscape + UrbanApp*SiteType + LandUse
+out3varLg.11 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
+saveRDS(out3varLg.11, "../03ModelOutputs/Durham/DurhamTrees_3var_m11_log.rds") #DIC  23821.28
+##okay model 11 is an improvement on even model 3
+gjamPlot(out3varLg.11, plotPars=ppars)
+
+#VIF is now good for everything except the segments, but not sure we can do much about that
+#the lowest by sensitivity are: mulch, year, urban app
+
+#try without mulch
+fm = ~ SegmentMod + Year + BasalArea*SppGroup + Gardenscape + UrbanApp*SiteType + LandUse
+out3varLg.12 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
+saveRDS(out3varLg.12, "../03ModelOutputs/Durham/DurhamTrees_3var_m12_log.rds") #DIC
+
+#try without urban app
+fm = ~ SegmentMod + Year + BasalArea*SppGroup + Mulch + Gardenscape + SiteType + LandUse
+out3varLg.13 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
+saveRDS(out3varLg.13, "../03ModelOutputs/Durham/DurhamTrees_3var_m13_log.rds") #DIC
         
 ```
 
