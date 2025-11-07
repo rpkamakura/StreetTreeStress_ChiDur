@@ -653,7 +653,12 @@ outMcomplex <- or( formula = fmcomplexCV, randVars = TreeName, data = TreeLvlCom
 
 saveRDS(outMcomplex, "../03ModelOutputs/Chicago/ChicagoTrees_1var_m1_log.rds")
 
-####get rid of things based on sensitivity
+#okay now get rid of the same things as above due to high VIF (should be the same) - model 3
+fm = y ~ Segment + Year + BasalArea*SppGroup + Powerline + Mulch + Gardenscape + PrunedCorrect + UrbanApp*SiteType + LandUse
+#run gjam model
+outCS.2 <- or( formula = fm, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 5000, nchain = 3 ) #DIC 2765.5
+saveRDS(outCS.2, "../03ModelOutputs/Chicago/ChicagoTrees_1var_m2_log.rds")
+
 ####Get sensitivity values
 sensitivity <- as.data.frame(matrix(0, ncol=4,nrow=length(outMcomplex$parameters$beta$Estimate)))
 names(sensitivity) <- c("Variable", "Beta_est", "Sigma", "Sensitivity")
@@ -663,16 +668,126 @@ sensitivity$Variable <- rownames(outMcomplex$parameters$beta)
 ##how to get the residual variance
 SS <- sumSquares(outMcomplex$prediction[,1], outMcomplex$inputs$data$y)
 sensitivity$Sigma <- rep((SS/(length(outMcomplex$inputs$data$y) - 2)), length(sensitivity$Variable))
-
 sensitivity$Sensitivity <- abs(sensitivity$Beta_est/sqrt(sensitivity$Sigma))
+write.csv(sensitivity, "../03ModelOutputs/Chicago/ChicagoTreesSensitivity_1var_m2.csv")
 
-write.csv(sensitivity, "../03ModelOutputs/Chicago/ChicagoTreesSensitivity_1var_m1.csv")
+#lowest sensitivity: powerline, gardenscape, then site type, pruned correct, then land use
 
-#okay now get rid of the same things as above due to high VIF (should be the same) - model 3
-fm = ~ Segment + Year + BasalArea*SppGroup + Powerline + Mulch + Gardenscape + PrunedCorrect + UrbanApp*SiteType + LandUse
+#try without powerline
+fm = y ~ Segment + Year + BasalArea*SppGroup + Mulch + Gardenscape + PrunedCorrect + UrbanApp*SiteType + LandUse
 #run gjam model
-outCS.2 <- or( formula = fm, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 5000, nchain = 3 ) #DIC
-saveRDS(outCS.2, "../03ModelOutputs/Chicago/ChicagoTrees_1var_m2_log.rds")
+outCS.3 <- or( formula = fm, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 5000, nchain = 3 ) #DIC 2762.6
+saveRDS(outCS.3, "../03ModelOutputs/Chicago/ChicagoTrees_1var_m3_log.rds")
+
+#okay now try without gardenscape
+fm = y ~ Segment + Year + BasalArea*SppGroup + Mulch + PrunedCorrect + UrbanApp*SiteType + LandUse
+#run gjam model
+outCS.4 <- or( formula = fm, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 5000, nchain = 3 ) #DIC 2756.3
+saveRDS(outCS.4, "../03ModelOutputs/Chicago/ChicagoTrees_1var_m4_log.rds")
+
+####Get sensitivity values
+sensitivity <- as.data.frame(matrix(0, ncol=4,nrow=length(outCS.4$parameters$beta$Estimate)))
+names(sensitivity) <- c("Variable", "Beta_est", "Sigma", "Sensitivity")
+sensitivity$Beta_est <- outCS.4$parameters$beta$Estimate
+sensitivity$Variable <- rownames(outCS.4$parameters$beta)
+
+##how to get the residual variance
+SS <- sumSquares(outCS.4$prediction[,1], outCS.4$inputs$data$y)
+sensitivity$Sigma <- rep((SS/(length(outCS.4$inputs$data$y) - 2)), length(sensitivity$Variable))
+sensitivity$Sensitivity <- abs(sensitivity$Beta_est/sqrt(sensitivity$Sigma))
+write.csv(sensitivity, "../03ModelOutputs/Chicago/ChicagoTreesSensitivity_1var_m4.csv")
+
+#try without land use and pruned correct
+fm = y ~ Segment + Year + BasalArea*SppGroup + Mulch + PrunedCorrect + UrbanApp*SiteType 
+#run gjam model
+outCS.5 <- or( formula = fm, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 5000, nchain = 3 ) #DIC 2751.7
+saveRDS(outCS.5, "../03ModelOutputs/Chicago/ChicagoTrees_1var_m5_log.rds")
+
+####Get sensitivity values
+sensitivity <- as.data.frame(matrix(0, ncol=4,nrow=length(outCS.5$parameters$beta$Estimate)))
+names(sensitivity) <- c("Variable", "Beta_est", "Sigma", "Sensitivity")
+sensitivity$Beta_est <- outCS.5$parameters$beta$Estimate
+sensitivity$Variable <- rownames(outCS.5$parameters$beta)
+
+##how to get the residual variance
+SS <- sumSquares(outCS.5$prediction[,1], outCS.5$inputs$data$y)
+sensitivity$Sigma <- rep((SS/(length(outCS.5$inputs$data$y) - 2)), length(sensitivity$Variable))
+sensitivity$Sensitivity <- abs(sensitivity$Beta_est/sqrt(sensitivity$Sigma))
+write.csv(sensitivity, "../03ModelOutputs/Chicago/ChicagoTreesSensitivity_1var_m5.csv")
+
+fm = y ~ Segment + Year + BasalArea*SppGroup + Mulch + UrbanApp*SiteType + LandUse
+#run gjam model
+outCS.6 <- or( formula = fm, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 5000, nchain = 3 ) #DIC 2756.1
+saveRDS(outCS.6, "../03ModelOutputs/Chicago/ChicagoTrees_1var_m6_log.rds")
+
+#try without both
+fm = y ~ Segment + Year + BasalArea*SppGroup + Mulch + UrbanApp*SiteType 
+#run gjam model
+outCS.7 <- or( formula = fm, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 5000, nchain = 3 ) #DIC 2753
+saveRDS(outCS.7, "../03ModelOutputs/Chicago/ChicagoTrees_1var_m7_log.rds")
+
+#modify model 5 based on sensitivity - pruned correct, mulch, ba*spp interaction
+#no pruned correct
+fm = y ~ Segment + Year + BasalArea*SppGroup + Mulch + UrbanApp*SiteType 
+#run gjam model
+outCS.8 <- or( formula = fm, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 5000, nchain = 3 ) #DIC 2752.3
+saveRDS(outCS.8, "../03ModelOutputs/Chicago/ChicagoTrees_1var_m8_log.rds")
+
+#no mulch
+fm = y ~ Segment + Year + BasalArea*SppGroup + PrunedCorrect + UrbanApp*SiteType 
+#run gjam model
+outCS.9 <- or( formula = fm, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 5000, nchain = 3 ) #DIC 2751.1
+saveRDS(outCS.9, "../03ModelOutputs/Chicago/ChicagoTrees_1var_m9_log.rds")
+
+####Get sensitivity values
+sensitivity <- as.data.frame(matrix(0, ncol=4,nrow=length(outCS.9$parameters$beta$Estimate)))
+names(sensitivity) <- c("Variable", "Beta_est", "Sigma", "Sensitivity")
+sensitivity$Beta_est <- outCS.9$parameters$beta$Estimate
+sensitivity$Variable <- rownames(outCS.9$parameters$beta)
+
+##how to get the residual variance
+SS <- sumSquares(outCS.9$prediction[,1], outCS.9$inputs$data$y)
+sensitivity$Sigma <- rep((SS/(length(outCS.5$inputs$data$y) - 2)), length(sensitivity$Variable))
+sensitivity$Sensitivity <- abs(sensitivity$Beta_est/sqrt(sensitivity$Sigma))
+write.csv(sensitivity, "../03ModelOutputs/Chicago/ChicagoTreesSensitivity_1var_m9.csv")
+
+#no interaction
+fm = y ~ Segment + Year + BasalArea + SppGroup + Mulch + PrunedCorrect + UrbanApp*SiteType 
+#run gjam model
+outCS.10 <- or( formula = fm, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 5000, nchain = 3 ) #DIC 2768
+saveRDS(outCS.10, "../03ModelOutputs/Chicago/ChicagoTrees_1var_m10_log.rds")
+
+#modify model 9 - lowest are pruned correct and the ba * species interaction, we know from the above that the interaction is probably not worth removing for now
+fm = y ~ Segment + Year + BasalArea*SppGroup + UrbanApp*SiteType 
+#run gjam model
+outCS.11 <- or( formula = fm, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 5000, nchain = 3 ) #DIC 2750.2
+saveRDS(outCS.11, "../03ModelOutputs/Chicago/ChicagoTrees_1var_m11_log.rds")
+
+####Get sensitivity values
+sensitivity <- as.data.frame(matrix(0, ncol=4,nrow=length(outCS.11$parameters$beta$Estimate)))
+names(sensitivity) <- c("Variable", "Beta_est", "Sigma", "Sensitivity")
+sensitivity$Beta_est <- outCS.11$parameters$beta$Estimate
+sensitivity$Variable <- rownames(outCS.11$parameters$beta)
+
+##how to get the residual variance
+SS <- sumSquares(outCS.11$prediction[,1], outCS.11$inputs$data$y)
+sensitivity$Sigma <- rep((SS/(length(outCS.5$inputs$data$y) - 2)), length(sensitivity$Variable))
+sensitivity$Sensitivity <- abs(sensitivity$Beta_est/sqrt(sensitivity$Sigma))
+write.csv(sensitivity, "../03ModelOutputs/Chicago/ChicagoTreesSensitivity_1var_m11.csv")
+
+#now confirm trying without interactions - modify model 11
+fm = y ~ Segment + Year + BasalArea + SppGroup + UrbanApp*SiteType 
+#run gjam model
+outCS.12 <- or( formula = fm, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 5000, nchain = 3 ) #DIC 2763.5
+saveRDS(outCS.12, "../03ModelOutputs/Chicago/ChicagoTrees_1var_m12_log.rds")
+
+fm = y ~ Segment + Year + BasalArea*SppGroup + UrbanApp + SiteType 
+#run gjam model
+outCS.13 <- or( formula = fm, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 5000, nchain = 3 ) #DIC 2753.3
+saveRDS(outCS.13, "../03ModelOutputs/Chicago/ChicagoTrees_1var_m13_log.rds")
+
+
+#seems like best model is model 11
 ```
 
 
