@@ -666,7 +666,7 @@ sensitivity$Sigma <- rep((SS/(length(outMcomplex$inputs$data$y) - 2)), length(se
 
 sensitivity$Sensitivity <- abs(sensitivity$Beta_est/sqrt(sensitivity$Sigma))
 
-write.csv(sensitivity, "../03ModelOutputs/Chicago/ChicagoTreesSensitivity_1var_m1.rds")
+write.csv(sensitivity, "../03ModelOutputs/Chicago/ChicagoTreesSensitivity_1var_m1.csv")
 
 ```
 
