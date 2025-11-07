@@ -17,7 +17,7 @@ library(dplyr)
 library(ggplot2)
 
 #install.packages( "./ordReg_1.0.tar.gz", repos=NULL, type="source" )
-#library('ordReg')
+library('ordReg')
 
 ```
 
@@ -619,13 +619,15 @@ saveRDS(out3varLG.6, "../03ModelOutputs/Chicago/ChicagoTrees_3var_m6_log.rds")
 ##okay so really model 3 seems like the best bet, let's just try without the interactions to confirm
 fm.1 = ~ Segment + Year + BasalArea + SppGroup + Powerline + Mulch + Gardenscape + PrunedCorrect + UrbanApp*SiteType + LandUse
 #run gjam model
-out3varLG.7 <- gjam(fm.1, xdataCom, ydata, modelList = mlsimp) # DIC 
+out3varLG.7 <- gjam(fm.1, xdataCom, ydata, modelList = mlsimp) # DIC 42362.25
 saveRDS(out3varLG.7, "../03ModelOutputs/Chicago/ChicagoTrees_3var_m7_log.rds")
 
 fm.2 = ~ Segment + Year + BasalArea*SppGroup + Powerline + Mulch + Gardenscape + PrunedCorrect + UrbanApp + SiteType + LandUse
 #run gjam model
-out3varLG.8 <- gjam(fm.2, xdataCom, ydata, modelList = mlsimp) # DIC 
+out3varLG.8 <- gjam(fm.2, xdataCom, ydata, modelList = mlsimp) # DIC 42374.87
 saveRDS(out3varLG.8, "../03ModelOutputs/Chicago/ChicagoTrees_3var_m8_log.rds")
+
+#better with the interactions, so model 3 it is
 ```
 
 
@@ -641,19 +643,30 @@ TreeLvlCombined_CV$CrownStress[TreeLvlCombined_CV$CrownStress == 5] <- 4
 TreeLvlCombined_CV <- TreeLvlCombined_CV[!is.na(TreeLvlCombined_CV$CrownStress),]
 #TreeLvlCombined_CV$CrownStress <- as.factor(TreeLvlCombined_CV$CrownStress)
 
-#get the model list
-mlsimp <- list(ng = 10000, burnin = 5000, typeNames = TypeNames, random="TreeName")
-
 #Get the y values
 TreeLvlCombined_CV$y <- TreeLvlCombined_CV$CrownStress
+TreeLvlCombined_CV$BasalArea <- log(TreeLvlCombined_CV$BasalArea)
 
-fmcomplexCV <- y ~ Segment + Year + BasalArea*GenusGroup + Powerline+ Mulch + Gardenscape + PrunedCorrect + UrbanApp*SiteType + LandUse
+fmcomplexCV <- y ~ Segment + Year + BasalArea*SppGroup + Powerline + Mulch + Gardenscape + PrunedCorrect + CrownLight + UrbanApp*SiteType + LandUse + PercentImperv
 
-outMcomplex <- or( formula = fmcomplexCV, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 1000 )
+outMcomplex <- or( formula = fmcomplexCV, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 5000, nchain = 3 ) #DIC 2779.6
 
-
+saveRDS(outMcomplex, "../03ModelOutputs/Chicago/ChicagoTrees_1var_m1_log.rds")
 
 ####get rid of things based on sensitivity
+####Get sensitivity values
+sensitivity <- as.data.frame(matrix(0, ncol=4,nrow=length(outMcomplex$parameters$beta$Estimate)))
+names(sensitivity) <- c("Variable", "Beta_est", "Sigma", "Sensitivity")
+sensitivity$Beta_est <- outMcomplex$parameters$beta$Estimate
+sensitivity$Variable <- rownames(outMcomplex$parameters$beta)
+
+##how to get the residual variance
+SS <- sumSquares(outMcomplex$prediction[,1], outMcomplex$inputs$data$y)
+sensitivity$Sigma <- rep((SS/(length(outMcomplex$inputs$data$y) - 2)), length(sensitivity$Variable))
+
+sensitivity$Sensitivity <- abs(sensitivity$Beta_est/sqrt(sensitivity$Sigma))
+
+write.csv(sensitivity, "../03ModelOutputs/Chicago/ChicagoTreesSensitivity_1var_m1.rds")
 
 ```
 
