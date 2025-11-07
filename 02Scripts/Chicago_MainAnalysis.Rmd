@@ -649,7 +649,7 @@ TreeLvlCombined_CV$BasalArea <- log(TreeLvlCombined_CV$BasalArea)
 
 fmcomplexCV <- y ~ Segment + Year + BasalArea*SppGroup + Powerline + Mulch + Gardenscape + PrunedCorrect + CrownLight + UrbanApp*SiteType + LandUse + PercentImperv
 
-outMcomplex <- or( formula = fmcomplexCV, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 5000, nchain = 3 ) #DIC 2779.6
+outMcomplex <- or( formula = fmcomplexCV, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 5000, nchain = 3 ) #DIC 2768.4
 
 saveRDS(outMcomplex, "../03ModelOutputs/Chicago/ChicagoTrees_1var_m1_log.rds")
 
@@ -668,6 +668,11 @@ sensitivity$Sensitivity <- abs(sensitivity$Beta_est/sqrt(sensitivity$Sigma))
 
 write.csv(sensitivity, "../03ModelOutputs/Chicago/ChicagoTreesSensitivity_1var_m1.csv")
 
+#okay now get rid of the same things as above due to high VIF (should be the same) - model 3
+fm = ~ Segment + Year + BasalArea*SppGroup + Powerline + Mulch + Gardenscape + PrunedCorrect + UrbanApp*SiteType + LandUse
+#run gjam model
+outCS.2 <- or( formula = fm, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 5000, nchain = 3 ) #DIC
+saveRDS(outCS.2, "../03ModelOutputs/Chicago/ChicagoTrees_1var_m2_log.rds")
 ```
 
 
