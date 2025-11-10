@@ -628,6 +628,35 @@ out3varLG.8 <- gjam(fm.2, xdataCom, ydata, modelList = mlsimp) # DIC 42374.87
 saveRDS(out3varLG.8, "../03ModelOutputs/Chicago/ChicagoTrees_3var_m8_log.rds")
 
 #better with the interactions, so model 3 it is
+# fractionExplained
+#                    Defoliation Discoloration Dieback
+# total variance           5.070         1.850   5.530
+# mean fraction            0.696         0.356   0.311
+# R2                       0.655         0.288   0.225
+# RE fraction              0.142         0.169   0.591
+# mean + RE fraction       0.838         0.525   0.902
+```
+
+# Look at parameter estimates
+
+```{r 3 var parameter estimates}
+#our best model is model 3
+xvector <- colMeans(out3varLG.3$inputs$xStand)  #predict at mean values for data
+xvector[1] <- 1
+
+fit.3var.m3 <- gjamIIE(out3varLG.3, xvector, MEAN = T, keepNames = NULL, omitY = NULL, 
+          sdScaleX = T, sdScaleY = F)
+
+gjamIIEplot(fit.3var.m3, response = 'Defoliation', effectMu = c('main','ind'), 
+            effectSd = c('main','ind'), legLoc = 'topleft')
+
+gjamIIEplot(fit.3var.m3, response = 'Discoloration', effectMu = c('main','ind'), 
+            effectSd = c('main','ind'), legLoc = 'topleft')
+
+gjamIIEplot(fit.3var.m3, response = 'Dieback', effectMu = c('main','ind'), 
+            effectSd = c('main','ind'), legLoc = 'topleft')
+
+write.csv(PE, "../03ModelOutputs/Chicago/Chicago_3var_m3_Betas.csv")
 ```
 
 
@@ -774,6 +803,9 @@ SS <- sumSquares(outCS.11$prediction[,1], outCS.11$inputs$data$y)
 sensitivity$Sigma <- rep((SS/(length(outCS.5$inputs$data$y) - 2)), length(sensitivity$Variable))
 sensitivity$Sensitivity <- abs(sensitivity$Beta_est/sqrt(sensitivity$Sigma))
 write.csv(sensitivity, "../03ModelOutputs/Chicago/ChicagoTreesSensitivity_1var_m11.csv")
+
+#save csv
+write.csv(outCS.11$parameters$beta, "../03ModelOutputs/Chicago/Chicago_1var_m11_Betas.csv")
 
 #now confirm trying without interactions - modify model 11
 fm = y ~ Segment + Year + BasalArea + SppGroup + UrbanApp*SiteType 
