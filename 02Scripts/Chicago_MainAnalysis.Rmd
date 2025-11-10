@@ -830,8 +830,8 @@ need a version of the dataset that only has the most recent data for each tree
 ```{r summary stats}
 #for supplement
 TreeLvlCombined_mod$GenSpe <- TreeLvlCombined$GenSpe[match(TreeLvlCombined_mod$TreeName, TreeLvlCombined$TreeName)]
-TreeLvlCombined_mod$LandUse <- TreeLvlCombined$LandUse[match(TreeLvlCombined_mod$TreeName, TreeLvlCombined$TreeName)]
-TreeLvlCombined_mod$SiteType <- TreeLvlCombined$SiteType[match(TreeLvlCombined_mod$TreeName, TreeLvlCombined$TreeName)]
+#TreeLvlCombined_mod$LandUse <- TreeLvlCombined$LandUse[match(TreeLvlCombined_mod$TreeName, TreeLvlCombined$TreeName)]
+#TreeLvlCombined_mod$SiteType <- TreeLvlCombined$SiteType[match(TreeLvlCombined_mod$TreeName, TreeLvlCombined$TreeName)]
 
 ###always use
 uniTrees <- unique(TreeLvlCombined_mod$TreeName)

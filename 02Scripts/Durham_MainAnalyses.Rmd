@@ -287,7 +287,7 @@ TreeLvlCombined_mod$SppGroup[TreeLvlCombined_mod$Genus %in% names(CommonGenus)]<
 TreeLvlCombined_mod$SppGroup[TreeLvlCombined_mod$GenSpe %in% names(CommonSpp)] <- TreeLvlCombined_mod$GenSpe[TreeLvlCombined_mod$GenSpe %in% names(CommonSpp)] #common species
 
 #set the baseline spp
-TreeLvlCombined_mod$SppGroup[TreeLvlCombined_mod$SppGroup == "Lagerstroemia_spp."] <- "AA_Lagerstroemia"
+TreeLvlCombined_mod$SppGroup[TreeLvlCombined_mod$SppGroup == "Lagerstroemia_spp"] <- "AA_Lagerstroemia"
 TreeLvlCombined_mod$SppGroup <- as.factor(TreeLvlCombined_mod$SppGroup) #for model
 
 ```
@@ -556,6 +556,8 @@ ggplot(TreeLvlCombined_mod, aes(y = BasalArea, x = PrunedCorrect, colour = Prune
 ###Set up for gjam run
 TypeNames <- c("OC", "OC", "OC")
 
+#TreeLvlCombined_mod <- TreeLvlCombined_mod[!is.na(TreeLvlCombined_mod$TreeName),]
+
 #get ydata
 ydata <- TreeLvlCombined_mod[!is.na(TreeLvlCombined_mod$Gardenscape),c("Defoliation", "Discoloration", "Dieback")]
 
@@ -712,12 +714,14 @@ gjamPlot(out3varLg.15, plotPars=ppars)
 #no mulch
 fm = ~ SegmentMod + Year + BasalArea*SppGroup + Gardenscape + UrbanApp + SiteType + LandUse
 out3varLg.16 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
-saveRDS(out3varLg.16, "../03ModelOutputs/Durham/DurhamTrees_3var_m16_log.rds") #DIC
+saveRDS(out3varLg.16, "../03ModelOutputs/Durham/DurhamTrees_3var_m16_log.rds") #DIC 23923.18
 
 #no urban app
 fm = ~ SegmentMod + Year + BasalArea*SppGroup + Mulch + Gardenscape + SiteType + LandUse
 out3varLg.17 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
-saveRDS(out3varLg.17, "../03ModelOutputs/Durham/DurhamTrees_3var_m17_log.rds") #DIC
+saveRDS(out3varLg.17, "../03ModelOutputs/Durham/DurhamTrees_3var_m17_log.rds") #DIC 24336
+
+#alright so model 15 is the best
         
 ```
 
@@ -732,6 +736,7 @@ uniTrees <- unique(TreeLvlCombined_mod$TreeName)
 colnms <- c("TreeName", "Genspe", "Genus", "SppGroup", "Segment", "BasalArea", "Discoloration", "Defoliation", "Dieback", "CrownStress", "LandUse", "PercImperv", "Powerline", "Mulch", "MulchVolcano", "CorrPrune", "Pruned", "Gardenscape", "TrunkDamage", "CrownLight", "SiteType", "DBH", "Sidewalk")
 summaryDat <- as.data.frame(matrix(NA, nrow =length(uniTrees), ncol=length(colnms)))
 names(summaryDat) <- colnms
+
 
 for (t in 1:length(uniTrees)){
   tr <- uniTrees[t]
