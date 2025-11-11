@@ -725,7 +725,122 @@ saveRDS(out3varLg.17, "../03ModelOutputs/Durham/DurhamTrees_3var_m17_log.rds") #
         
 ```
 
+# Look at parameter estimates
 
+```{r 3 var parameter estimates}
+#our best model is model 3
+xvector <- colMeans(out3varLg.15$inputs$xStand)  #predict at mean values for data
+xvector[1] <- 1
+
+fit.3var.m3 <- gjamIIE(out3varLg.15, xvector, MEAN = T, keepNames = NULL, omitY = NULL, 
+          sdScaleX = T, sdScaleY = F)
+
+gjamIIEplot(fit.3var.m3, response = 'Defoliation', effectMu = c('main','ind'), 
+            effectSd = c('main','ind'), legLoc = 'topleft')
+
+gjamIIEplot(fit.3var.m3, response = 'Discoloration', effectMu = c('main','ind'), 
+            effectSd = c('main','ind'), legLoc = 'topleft')
+
+gjamIIEplot(fit.3var.m3, response = 'Dieback', effectMu = c('main','ind'), 
+            effectSd = c('main','ind'), legLoc = 'topleft')
+
+write.csv(PE, "../03ModelOutputs/Durham/Durham_3var_m15_Betas.csv")
+```
+
+## crown stress
+
+```{r crown stress}
+TreeLvlCombined_CV <- TreeLvlCombined_mod[!is.na(TreeLvlCombined_mod$Gardenscape),]
+
+##clean up the crown stress values
+TreeLvlCombined_CV$CrownStress[TreeLvlCombined_CV$CrownStress == 5] <- 4
+TreeLvlCombined_CV <- TreeLvlCombined_CV[!is.na(TreeLvlCombined_CV$CrownStress),]
+#TreeLvlCombined_CV$CrownStress <- as.factor(TreeLvlCombined_CV$CrownStress)
+
+#Get the y values
+TreeLvlCombined_CV$y <- TreeLvlCombined_CV$CrownStress
+TreeLvlCombined_CV$BasalArea <- log(TreeLvlCombined_CV$BasalArea)
+
+#take the baseline but then get rid of variables you know have too high VIF
+fm <- y ~ SegmentMod + Year + BasalArea*SppGroup + Powerline + Mulch + Gardenscape + PrunedCorrect + UrbanApp*SiteType + LandUse
+
+outMcomplex <- or( formula = fm, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 5000, nchain = 3 ) #DIC 1850.8
+
+saveRDS(outMcomplex, "../03ModelOutputs/Durham/DurhamTrees_1var_m1_log.rds")
+
+##look at sensitivity
+####Get sensitivity values
+sensitivity <- as.data.frame(matrix(0, ncol=4,nrow=length(outMcomplex$parameters$beta$Estimate)))
+names(sensitivity) <- c("Variable", "Beta_est", "Sigma", "Sensitivity")
+sensitivity$Beta_est <- outMcomplex$parameters$beta$Estimate
+sensitivity$Variable <- rownames(outMcomplex$parameters$beta)
+
+##how to get the residual variance
+SS <- sumSquares(outMcomplex$prediction[,1], outMcomplex$inputs$data$y)
+sensitivity$Sigma <- rep((SS/(length(outMcomplex$inputs$data$y) - 2)), length(sensitivity$Variable))
+sensitivity$Sensitivity <- abs(sensitivity$Beta_est/sqrt(sensitivity$Sigma))
+write.csv(sensitivity, "../03ModelOutputs/Durham/DurhamTreesSensitivity_1var_m1.csv")
+
+#from sensitivity, try removing
+#interaction with urban app, urban app entirely, pruned correct, interaction with basal area
+fm <- y ~ SegmentMod + Year + BasalArea + SppGroup + Powerline + Mulch + Gardenscape + PrunedCorrect + UrbanApp*SiteType + LandUse
+outCS.2 <- or( formula = fm, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 5000, nchain = 3 ) #DIC 1839.6
+
+saveRDS(outCS.2, "../03ModelOutputs/Durham/DurhamTrees_1var_m2_log.rds")
+
+####Get sensitivity values
+sensitivity <- as.data.frame(matrix(0, ncol=4,nrow=length(outCS.2$parameters$beta$Estimate)))
+names(sensitivity) <- c("Variable", "Beta_est", "Sigma", "Sensitivity")
+sensitivity$Beta_est <- outCS.2$parameters$beta$Estimate
+sensitivity$Variable <- rownames(outCS.2$parameters$beta)
+
+##how to get the residual variance
+SS <- sumSquares(outCS.2$prediction[,1], outCS.2$inputs$data$y)
+sensitivity$Sigma <- rep((SS/(length(outCS.2$inputs$data$y) - 2)), length(sensitivity$Variable))
+sensitivity$Sensitivity <- abs(sensitivity$Beta_est/sqrt(sensitivity$Sigma))
+write.csv(sensitivity, "../03ModelOutputs/Durham/DurhamTreesSensitivity_1var_m2.csv")
+
+#now the lowest besides basal area is pruned correct and maybe urban app * site type interaction
+
+#okay now try without pruned correct
+fm <- y ~ SegmentMod + Year + BasalArea + SppGroup + Powerline + Mulch + Gardenscape + UrbanApp*SiteType + LandUse
+outCS.3 <- or( formula = fm, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 5000, nchain = 3 ) #DIC 1837.7
+
+saveRDS(outCS.3, "../03ModelOutputs/Durham/DurhamTrees_1var_m3_log.rds")
+
+sensitivity <- as.data.frame(matrix(0, ncol=4,nrow=length(outCS.3$parameters$beta$Estimate)))
+names(sensitivity) <- c("Variable", "Beta_est", "Sigma", "Sensitivity")
+sensitivity$Beta_est <- outCS.3$parameters$beta$Estimate
+sensitivity$Variable <- rownames(outCS.3$parameters$beta)
+
+##how to get the residual variance
+SS <- sumSquares(outCS.3$prediction[,1], outCS.3$inputs$data$y)
+sensitivity$Sigma <- rep((SS/(length(outCS.3$inputs$data$y) - 2)), length(sensitivity$Variable))
+sensitivity$Sensitivity <- abs(sensitivity$Beta_est/sqrt(sensitivity$Sigma))
+write.csv(sensitivity, "../03ModelOutputs/Durham/DurhamTreesSensitivity_1var_m3.csv")
+
+#try without urban app interaction
+fm <- y ~ SegmentMod + Year + BasalArea + SppGroup + Powerline + Mulch + Gardenscape + UrbanApp + SiteType + LandUse
+outCS.4 <- or( formula = fm, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 5000, nchain = 3 ) #DIC 1842.1
+
+saveRDS(outCS.4, "../03ModelOutputs/Durham/DurhamTrees_1var_m4_log.rds")
+
+#that is worse, so instead try without mulch
+fm <- y ~ SegmentMod + Year + BasalArea + SppGroup + Powerline + Gardenscape + UrbanApp*SiteType + LandUse
+outCS.5 <- or( formula = fm, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 5000, nchain = 3 ) #DIC 1837.7
+
+saveRDS(outCS.5, "../03ModelOutputs/Durham/DurhamTrees_1var_m5_log.rds")
+
+#that is about the same as with mulch, slightly lower DIC
+#try removing urban app all together
+fm <- y ~ SegmentMod + Year + BasalArea + SppGroup + Powerline + Mulch + Gardenscape + SiteType + LandUse
+outCS.6 <- or( formula = fm, randVars = TreeName, data = TreeLvlCombined_CV,  ng = 10000, burnin = 5000, nchain = 3 ) #DIC 1855.3
+
+saveRDS(outCS.6, "../03ModelOutputs/Durham/DurhamTrees_1var_m6_log.rds")
+
+#seems like our best bet is model 3
+write.csv(outCS.3$parameters$beta, "../03ModelOutputs/Durham/DurhamTrees_1var_m3_Betas.csv")
+```
 
 ##get summary stats
 
