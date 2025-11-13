@@ -657,121 +657,39 @@ out3varLg.4.3 <- gjam(fm, xdataCom, ydata, modelList = mlsimp) #DIC 23825.96
 saveRDS(out3varLg.4.3, "../03ModelOutputs/Durham/DurhamTrees_3var_m4_3_log.rds")
 
 #okay so that is an improvement
+#                    Defoliation Discoloration Dieback
+# total variance          2.5400        1.7600   4.460
+# mean fraction           0.6350        0.4460   0.361
+# R2                      0.5670        0.3410   0.247
+# RE fraction             0.0304        0.0862   0.524
+# mean + RE fraction      0.6660        0.5320   0.885
 
 #try removing mulch and urban app
 #no mulch
 fm = ~ SegmentMod + Year + BasalArea*SppGroup + Gardenscape + UrbanApp*SiteType + LandUse
-out3varLg.4.3.1 <- gjam(fm, xdataCom, ydata, modelList = mlsimp) #DIC 
+out3varLg.4.3.1 <- gjam(fm, xdataCom, ydata, modelList = mlsimp) #DIC 23887.71
 saveRDS(out3varLg.4.3.1, "../03ModelOutputs/Durham/DurhamTrees_3var_m4_31_log.rds")
 
 #no urban app
 fm = ~ SegmentMod + Year + BasalArea*SppGroup + Mulch + Gardenscape + SiteType + LandUse
-out3varLg.4.3.2 <- gjam(fm, xdataCom, ydata, modelList = mlsimp) #DIC 
+out3varLg.4.3.2 <- gjam(fm, xdataCom, ydata, modelList = mlsimp) #DIC 24391.8
 saveRDS(out3varLg.4.3.2, "../03ModelOutputs/Durham/DurhamTrees_3var_m4_32_log.rds")
 
+#need the actual base model
+fm = ~ SegmentMod + Year + BasalArea*SppGroup + Powerline + Mulch + Gardenscape + UrbanApp*SiteType + LandUse
+out3varLg.4.0 <- gjam(fm, xdataCom, ydata, modelList = mlsimp) #DIC 
+saveRDS(out3varLg.4.0, "../03ModelOutputs/Durham/DurhamTrees_3var_mBase_log.rds")
 ```
 
-
-
-
-```{r old DIC}
-######below was based on different DIC (though values listed have now been updated)
-
-
-#try instead without percent impervious
-fm = ~ SegmentMod + Year + BasalArea*SppGroup + Powerline+ Mulch + Gardenscape + UrbanApp*SiteType + LandUse
-out3varLg.5 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
-saveRDS(out3varLg.5, "../03ModelOutputs/Durham/DurhamTrees_3var_m5_log.rds") #DIC 23924.22
-#land use CommMx still has a VIF of 5.65
-#some of the segments are still way too high - can we do some grouping?
-
-#gjamPlot(out3varLg.5, plotPars=ppars)
-#lowest by sensitivity is mulch, powerline, and year
-
-#okay try instead without powerlines (modifying model 3)
-fm = ~ SegmentMod + Year + BasalArea*SppGroup + PercentImperv + Mulch + Gardenscape + UrbanApp*SiteType + LandUse
-out3varLg.6 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
-saveRDS(out3varLg.6, "../03ModelOutputs/Durham/DurhamTrees_3var_m6_log.rds") #DIC 23992.34
-
-#try instead without mulch (modifying model 3)
-fm = ~ SegmentMod + Year + BasalArea*SppGroup + Powerline + PercentImperv + Gardenscape + UrbanApp*SiteType + LandUse
-out3varLg.7 <- gjam(fm, xdataCom, ydata, modelList = mlsimp) #23962.35
-saveRDS(out3varLg.7, "../03ModelOutputs/Durham/DurhamTrees_3var_m7_log.rds") #DIC 23937.63
-#gjamPlot(out3varLg.7, plotPars=ppars)
-
-#okay try without land use for VIF, despite how important it should be... modifying model 3
-fm = ~ SegmentMod + Year + BasalArea*SppGroup + Powerline + PercentImperv + Mulch + Gardenscape + UrbanApp*SiteType
-out3varLg.8 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
-saveRDS(out3varLg.8, "../03ModelOutputs/Durham/DurhamTrees_3var_m8_log.rds") #DIC 24001.75
-
-#site type and some segments are still too high but the rest seem decent
-#alright just to check it, try without segment... again modifying model 3
-fm = ~ Year + BasalArea*SppGroup + Powerline + PercentImperv + Mulch + Gardenscape + UrbanApp*SiteType + LandUse
-out3varLg.9 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
-saveRDS(out3varLg.9, "../03ModelOutputs/Durham/DurhamTrees_3var_m9_log.rds") #DIC 24070.22
-
-#######Next
-#alright well none of the above has lower DIC than number 3, so going to go with the next lowest and see if we can get lower by dropping other variables
-#modify model 5 based on sensitivity - try without mulch
-fm = ~ SegmentMod + Year + BasalArea*SppGroup + Powerline + Gardenscape + UrbanApp*SiteType + LandUse
-out3varLg.10 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
-saveRDS(out3varLg.10, "../03ModelOutputs/Durham/DurhamTrees_3var_m10_log.rds") #DIC 23986.41
-
-#okay instead try model 5 without powerline
-fm = ~ SegmentMod + Year + BasalArea*SppGroup + Mulch + Gardenscape + UrbanApp*SiteType + LandUse
-out3varLg.11 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
-saveRDS(out3varLg.11, "../03ModelOutputs/Durham/DurhamTrees_3var_m11_log.rds") #DIC  24035.71
-##okay model 11 is an improvement on even model 3
-#gjamPlot(out3varLg.11, plotPars=ppars)
-
-#VIF is now good for everything except the segments, but not sure we can do much about that
-#the lowest by sensitivity are: mulch, year, urban app
-
-#try without mulch
-fm = ~ SegmentMod + Year + BasalArea*SppGroup + Gardenscape + UrbanApp*SiteType + LandUse
-out3varLg.12 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
-saveRDS(out3varLg.12, "../03ModelOutputs/Durham/DurhamTrees_3var_m12_log.rds") #DIC 24092.44
-
-#try without urban app
-fm = ~ SegmentMod + Year + BasalArea*SppGroup + Mulch + Gardenscape + SiteType + LandUse
-out3varLg.13 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
-saveRDS(out3varLg.13, "../03ModelOutputs/Durham/DurhamTrees_3var_m13_log.rds") #DIC 24393.87
-
-#okay do last confirmation try without interactions
-fm = ~ SegmentMod + Year + BasalArea + SppGroup + Mulch + Gardenscape + UrbanApp*SiteType + LandUse
-out3varLg.14 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
-saveRDS(out3varLg.14, "../03ModelOutputs/Durham/DurhamTrees_3var_m14_log.rds") #DIC 23995.26
-
-# fm = ~ SegmentMod + Year + BasalArea*SppGroup + Mulch + Gardenscape + UrbanApp + SiteType + LandUse
-# out3varLg.15 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
-# saveRDS(out3varLg.15, "../03ModelOutputs/Durham/DurhamTrees_3var_m15_log.rds") #DIC 24060.63
-# 
-# gjamPlot(out3varLg.15, plotPars=ppars)
-
-#mulch and urban app are the lowest, so try again without those, modifying model 15
-
-#no mulch
-fm = ~ SegmentMod + Year + BasalArea*SppGroup + Gardenscape + UrbanApp + SiteType + LandUse
-out3varLg.16 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
-saveRDS(out3varLg.16, "../03ModelOutputs/Durham/DurhamTrees_3var_m16_log.rds") #DIC 23923.18
-
-#no urban app
-fm = ~ SegmentMod + Year + BasalArea*SppGroup + Mulch + Gardenscape + SiteType + LandUse
-out3varLg.17 <- gjam(fm, xdataCom, ydata, modelList = mlsimp)
-saveRDS(out3varLg.17, "../03ModelOutputs/Durham/DurhamTrees_3var_m17_log.rds") #DIC 24336
-
-#alright so model 15 is the best
-        
-```
 
 # Look at parameter estimates
 
 ```{r 3 var parameter estimates}
 #our best model is model 3
-xvector <- colMeans(out3varLg.15$inputs$xStand)  #predict at mean values for data
+xvector <- colMeans(out3varLg.4.3$inputs$xStand)  #predict at mean values for data
 xvector[1] <- 1
 
-fit.3var.m3 <- gjamIIE(out3varLg.15, xvector, MEAN = T, keepNames = NULL, omitY = NULL, 
+fit.3var.m3 <- gjamIIE(out3varLg.4.3, xvector, MEAN = T, keepNames = NULL, omitY = NULL, 
           sdScaleX = T, sdScaleY = F)
 
 gjamIIEplot(fit.3var.m3, response = 'Defoliation', effectMu = c('main','ind'), 
@@ -783,7 +701,7 @@ gjamIIEplot(fit.3var.m3, response = 'Discoloration', effectMu = c('main','ind'),
 gjamIIEplot(fit.3var.m3, response = 'Dieback', effectMu = c('main','ind'), 
             effectSd = c('main','ind'), legLoc = 'topleft')
 
-write.csv(out3varLg.15$parameters$betaTable, "../03ModelOutputs/Durham/Durham_3var_m15_Betas.csv")
+#write.csv(out3varLg.4.3$parameters$betaTable, "../03ModelOutputs/Durham/Durham_3var_m43_Betas.csv")
 ```
 
 ## crown stress
@@ -878,7 +796,10 @@ outCS.6 <- or( formula = fm, randVars = TreeName, data = TreeLvlCombined_CV,  ng
 saveRDS(outCS.6, "../03ModelOutputs/Durham/DurhamTrees_1var_m6_log.rds")
 
 #seems like our best bet is model 3
-write.csv(outCS.3$parameters$beta, "../03ModelOutputs/Durham/DurhamTrees_1var_m3_Betas.csv")
+write.csv(outCS$parameters$beta, "../03ModelOutputs/Durham/DurhamTrees_1var_m3_Betas.csv")
+
+#     n predictors ordinal_classes    DIC    r2 RMSPE
+# 1 754         46               3 1837.7 0.327 0.873
 ```
 
 ##get summary stats

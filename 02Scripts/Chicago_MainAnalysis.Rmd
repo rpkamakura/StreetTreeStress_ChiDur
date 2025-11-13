@@ -656,7 +656,7 @@ gjamIIEplot(fit.3var.m3, response = 'Discoloration', effectMu = c('main','ind'),
 gjamIIEplot(fit.3var.m3, response = 'Dieback', effectMu = c('main','ind'), 
             effectSd = c('main','ind'), legLoc = 'topleft')
 
-write.csv(PE, "../03ModelOutputs/Chicago/Chicago_3var_m3_Betas.csv")
+write.csv(fit.3var.m3$parameters$betaTable, "../03ModelOutputs/Chicago/Chicago_3var_m3_Betas.csv")
 ```
 
 
