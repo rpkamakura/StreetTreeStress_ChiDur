@@ -3,9 +3,11 @@
 This is the code and data accompanying the paper: Street Tree Stress Levels Vary with Tree Species, Urban Tolerance, and Urban Conditions in Two U.S. Cities
 
 ## Contact 
-For any questions, contact Ren Kamakura at: renatakamakura@gmail.com
+For any questions, contact Ren Poulton Kamakura at: renatakamakura@gmail.com
 
 ## File Organization
+
+__00SupplementalMaterials:__ This includes a PDF of the supplemental materials referenced in the manuscript, including tables with names of species sampled, full model parameter estimates, and some model diagnostics. 
 
 __01Data:__ Includes data collected for each city and quality control (QAQC) data
 * Chicago: 
@@ -31,3 +33,9 @@ __02Scripts:__ The R code and related files used for data analysis
 * DurhamMainAnalyses: code used to run multivariate and univariate ordinal models in Durham
 * QAQC: code to look at QAQC data (see QAQC folder for results)
 * ordReg_1.0.tar: code written to run univariate ordinal models
+
+__03ModelOutputs:__ The R data files for the best fitting models
+* Chicago
+  Has the rdata files for the best fitting multivariate and univariate models along with the parameter estimates (betas) in csv format.
+* Durham
+  Has the rdata files for the best fitting multivariate and univariate models along with the parameter estimates (betas) in csv format.
