@@ -19,11 +19,6 @@ library(ggplot2)
 #install.packages( "./ordReg_1.0.tar.gz", repos=NULL, type="source" )
 library('ordReg')
 
-#parallelize gjam
-library(future.apply)
-library(reshape2)
-library(coda)
-
 ```
 
 ```{r read in tree lvl data}
