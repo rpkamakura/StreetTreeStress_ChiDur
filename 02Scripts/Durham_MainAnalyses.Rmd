@@ -845,3 +845,44 @@ for (t in 1:length(uniTrees)){
 }
 
 ```
+
+##Look at chains
+
+primarily for univariate case
+example predictors: Year2023, BasalArea
+
+To make plotting easiest, create df with a column that is the iteration number, a column that is the value (labeled by the predictor), and a column that tells you which chain it is from? 
+
+```{r reformat chains}
+
+outCS.3 <- readRDS("../03ModelOutputs/Durham/DurhamTrees_1var_m3_log.rds")
+
+c1 <- outCS.3$chains$bgibbs[[1]]
+c2 <- outCS.3$chains$bgibbs[[2]]
+c3 <- outCS.3$chains$bgibbs[[3]]
+
+nrw <- length(c1[,c("Year2023")])
+
+cnms <- c("Iter", "Chain", "Year2023", "BasalArea")
+Chains2Plot <- as.data.frame(matrix(0, nrow=(nrw*3), ncol=length(cnms)))
+names(Chains2Plot) <- cnms
+
+Chains2Plot$Iter <- 1:nrw
+Chains2Plot$Chain <- as.factor(c(rep(1, nrw), rep(2, nrw), rep(3, nrw)))
+Chains2Plot$Year2023 <- c(c1[,c("Year2023")], c2[,c("Year2023")], c3[,c("Year2023")])
+Chains2Plot$BasalArea <- c(c1[,c("BasalArea")], c2[,c("BasalArea")], c3[,c("BasalArea")])
+
+```
+
+```{r plot chains}
+ggplot(data=Chains2Plot, aes(x=Iter, y=Year2023, group=Chain)) +
+  geom_line(aes(color=Chain)) + geom_vline(xintercept=5000, linetype='dashed', color='red', size=2) + 
+  xlab("Iter") + ylab("Estimate") + ggtitle("Year Chains") +
+  scale_colour_grey(start = 0.2, end = 0.8) + theme_classic()
+
+ggplot(data=Chains2Plot, aes(x=Iter, y=BasalArea, group=Chain)) +
+  geom_line(aes(color=Chain)) + geom_vline(xintercept=5000, linetype='dashed', color='red', size=2) + 
+  xlab("Iter") + ylab("Estimate") + ggtitle("Basal Area Chains") +
+  scale_colour_grey(start = 0.2, end = 0.8) + theme_classic()
+
+```
